@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { ShoppingBag, Sparkles, User, Search, Shield, Menu, X, ArrowUpRight } from "lucide-react";
 import { useCartStore } from "@/lib/store/cart-store";
 import { AICopilotModal } from "./ai-copilot-modal";
+import { AuraminatorLogo } from "./brand-logo";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -20,11 +21,8 @@ export function Navbar() {
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Brand Logo */}
           <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2 group">
-              <span className="h-4 w-4 bg-white rounded-sm inline-block group-hover:scale-110 transition-transform duration-200"></span>
-              <span className="font-mono text-sm font-extrabold tracking-tight text-white">
-                AURAMINATOR<span className="text-zinc-500">.IN</span>
-              </span>
+            <Link href="/" className="flex items-center">
+              <AuraminatorLogo size="md" />
             </Link>
 
             {/* Desktop Navigation Links */}
@@ -36,16 +34,28 @@ export function Navbar() {
                 DROPS
               </Link>
               <Link
-                href="/explore?type=digital_file"
-                className="text-zinc-400 hover:text-white transition-colors"
+                href="/explore?type=service"
+                className={`transition-colors ${pathname === "/explore?type=service" ? "text-white font-bold" : "text-zinc-400 hover:text-white"}`}
               >
-                DIGITAL VAULT
+                TECH SERVICES
               </Link>
               <Link
                 href="/explore?type=physical"
                 className="text-zinc-400 hover:text-white transition-colors"
               >
                 STREETWEAR
+              </Link>
+              <Link
+                href="/explore?type=digital_file"
+                className="text-zinc-400 hover:text-white transition-colors"
+              >
+                DIGITAL VAULT
+              </Link>
+              <Link
+                href="/jobs"
+                className={`transition-colors ${pathname.startsWith("/jobs") ? "text-white font-bold" : "text-zinc-400 hover:text-white"}`}
+              >
+                CAREERS
               </Link>
               <Link
                 href="/seller/dashboard"
@@ -111,51 +121,66 @@ export function Navbar() {
 
         {/* Mobile Dropdown Menu */}
         {isMobileMenuOpen && (
-          <div className="border-b border-border bg-black px-4 py-4 md:hidden font-mono text-xs space-y-3">
+          <div className="border-b border-border bg-black px-4 py-5 md:hidden font-mono text-xs space-y-4">
             <Link
               href="/explore"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="block text-zinc-300 hover:text-white py-1"
+              className="block group"
             >
-              BROWSE ALL DROPS
+              <span className="text-white font-bold block">ALL RELEASES &amp; DROPS</span>
+              <span className="text-[10px] text-zinc-500 font-sans">Explore tech services, physical streetwear &amp; digital vaults</span>
             </Link>
             <Link
-              href="/explore?type=digital_file"
+              href="/explore?type=service"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="block text-zinc-300 hover:text-white py-1"
+              className="block group"
             >
-              DIGITAL ASSET VAULT
+              <span className="text-emerald-400 font-bold block">TECH SERVICES (Debug &amp; Code)</span>
+              <span className="text-[10px] text-zinc-500 font-sans">24h bug fixing, Next.js architecture &amp; smart contract audits</span>
             </Link>
             <Link
               href="/explore?type=physical"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="block text-zinc-300 hover:text-white py-1"
+              className="block group"
             >
-              HEAVYWEIGHT STREETWEAR
+              <span className="text-white font-bold block">HEAVYWEIGHT STREETWEAR</span>
+              <span className="text-[10px] text-zinc-500 font-sans">500 GSM luxury garments with tracked courier delivery</span>
+            </Link>
+            <Link
+              href="/jobs"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="block group"
+            >
+              <span className="text-white font-bold block">CAREERS &amp; TECH JOBS</span>
+              <span className="text-[10px] text-zinc-500 font-sans">100% Free job board &amp; candidate applications</span>
             </Link>
             <Link
               href="/seller/dashboard"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="block text-zinc-300 hover:text-white py-1"
+              className="block group"
             >
-              SELLER STUDIO & ONBOARDING
+              <span className="text-white font-bold block">SELLER STUDIO &amp; KYC</span>
+              <span className="text-[10px] text-zinc-500 font-sans">Creator dashboard, escrow settlements &amp; drop creator</span>
             </Link>
             <Link
-              href="/admin/dashboard"
+              href="/brand"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="block text-zinc-300 hover:text-white py-1"
+              className="block group"
             >
-              ADMIN MISSION CONTROL
+              <span className="text-white font-bold block">BRAND ASSETS &amp; LOGOS</span>
+              <span className="text-[10px] text-zinc-500 font-sans">Download official vector SVG &amp; PNG logo files</span>
             </Link>
-            <button
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                setIsCopilotOpen(true);
-              }}
-              className="w-full text-left text-zinc-300 hover:text-white py-1 flex items-center gap-1.5"
-            >
-              <Sparkles className="h-3 w-3" /> LAUNCH AI COPILOT
-            </button>
+            <div className="pt-2 border-t border-border">
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  setIsCopilotOpen(true);
+                }}
+                className="w-full text-left text-emerald-400 font-bold py-1 flex items-center gap-1.5"
+              >
+                <Sparkles className="h-3.5 w-3.5" /> LAUNCH AI COPILOT ASSISTANT
+              </button>
+            </div>
           </div>
         )}
       </header>

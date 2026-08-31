@@ -36,9 +36,9 @@ export default function BuyerAccountPage() {
         {/* Header */}
         <div className="border-b border-white/[0.08] pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Account & Portfolio</h1>
-            <p className="text-xs font-mono text-zinc-500 mt-1">
-              Manage completed drops, physical orders, digital vaults, and security.
+            <h1 className="text-3xl font-bold tracking-tight">Buyer Account &amp; Library</h1>
+            <p className="text-xs font-mono text-zinc-400 mt-1">
+              Track live courier parcels, download your purchased digital files, and manage your account.
             </p>
           </div>
           <div className="flex gap-2 font-mono text-xs">
@@ -50,7 +50,7 @@ export default function BuyerAccountPage() {
                   : "text-zinc-400 hover:text-white"
               }`}
             >
-              Orders
+              Orders (Physical)
             </button>
             <button
               onClick={() => setActiveTab("library")}
@@ -60,7 +60,7 @@ export default function BuyerAccountPage() {
                   : "text-zinc-400 hover:text-white"
               }`}
             >
-              Digital Library
+              Digital Library (Files)
             </button>
             <button
               onClick={() => setActiveTab("settings")}

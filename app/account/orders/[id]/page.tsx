@@ -8,10 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ShieldAlert, ArrowLeft, CheckCircle2, AlertTriangle } from "lucide-react";
 import { formatINR } from "@/lib/utils";
+import { AuraminatorLogo, AuraminatorIcon } from "@/components/brand-logo";
 
 export default function OrderDetailsPage() {
   const params = useParams();
-  const orderId = (params.id as string) || "ORD-98214";
+  const orderId = (params?.id as string) || "ORD-98214";
 
   const [isDisputeOpen, setIsDisputeOpen] = useState(false);
   const [disputeReason, setDisputeReason] = useState("");
@@ -47,7 +48,10 @@ export default function OrderDetailsPage() {
             <ArrowLeft className="h-4 w-4" />
             <span>Back to Portfolio</span>
           </Link>
-          <span className="text-xs text-zinc-500">Order Reference: #{orderId}</span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-zinc-500">Order Reference: #{orderId}</span>
+            <AuraminatorIcon size={18} />
+          </div>
         </div>
 
         {/* Order Status Hero */}

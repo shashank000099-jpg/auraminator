@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ShieldCheck, CheckCircle2, Building, Upload, CreditCard, Sparkles, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AuraminatorIcon, AuraminatorLogo } from "@/components/brand-logo";
 
 export default function SellerOnboardingPage() {
   const router = useRouter();
@@ -98,17 +99,22 @@ export default function SellerOnboardingPage() {
     <div className="min-h-screen bg-black text-white p-4 sm:p-8 selection:bg-white selection:text-black font-mono">
       <div className="mx-auto max-w-3xl space-y-8">
         {/* Header */}
-        <div className="border-b border-border pb-6 space-y-2">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-surface px-3 py-1 text-[11px] text-zinc-300">
-            <ShieldCheck className="h-3 w-3 text-emerald-400" />
-            <span>VERIFIED CREATOR PROTOCOL</span>
+        <div className="border-b border-border pb-6 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-surface px-3 py-1 text-[11px] text-zinc-300">
+              <AuraminatorIcon size={14} />
+              <span>VERIFIED CREATOR PROTOCOL</span>
+            </div>
+            <h1 className="text-3xl font-extrabold uppercase tracking-tight text-white">
+              Seller KYC &amp; Creator Onboarding
+            </h1>
+            <p className="text-xs text-zinc-400 font-sans leading-relaxed">
+              Join the sovereign creator network in 3 minutes. Unlock instant payouts to your bank account, automated Shiprocket courier labels, and protected escrow sales.
+            </p>
           </div>
-          <h1 className="text-3xl font-extrabold uppercase tracking-tight text-white">
-            Seller KYC & Entity Onboarding
-          </h1>
-          <p className="text-xs text-zinc-500 font-sans">
-            Complete compliance onboarding to unlock double-entry escrow settlements, Shiprocket logistics dispatch, and direct Cloudflare R2 vault asset deployment.
-          </p>
+          <div>
+            <AuraminatorLogo size="sm" />
+          </div>
         </div>
 
         {/* Step Indicator */}

@@ -27,7 +27,7 @@ import { Button } from "@/components/ui/button";
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const slug = params.slug as string;
+  const slug = (params?.slug as string) || "vortex-heavyweight-hoodie";
 
   const [product, setProduct] = useState<Product | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
@@ -210,6 +210,26 @@ export default function ProductDetailPage() {
               </div>
             )}
 
+            {/* Product Type & Delivery Cue Banner */}
+            <div className="rounded-lg border border-white/10 bg-surface-elevated p-3 text-xs font-mono">
+              {product.product_type === "physical" ? (
+                <div className="flex items-center gap-2 text-zinc-300">
+                  <Box className="h-4 w-4 text-emerald-400" />
+                  <span>Physical Streetwear • Ships in 24-48 hrs with tracked courier</span>
+                </div>
+              ) : product.product_type === "digital_file" ? (
+                <div className="flex items-center gap-2 text-zinc-300">
+                  <Download className="h-4 w-4 text-emerald-400" />
+                  <span>Digital Vault • Instant file download available immediately in your library</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-zinc-300">
+                  <Link2 className="h-4 w-4 text-emerald-400" />
+                  <span>Protected Workspace • 1-Click Notion workspace duplication</span>
+                </div>
+              )}
+            </div>
+
             {/* Action Buttons */}
             <div className="space-y-3 pt-2 font-mono">
               <Button
@@ -237,12 +257,13 @@ export default function ProductDetailPage() {
             <div className="rounded-xl border border-border bg-surface p-4 space-y-2.5 font-mono text-xs text-zinc-400">
               <div className="flex items-center gap-2 text-white">
                 <ShieldCheck className="h-4 w-4 text-emerald-400" />
-                <span className="font-bold">Auraminator Buyer Protection Protocol</span>
+                <span className="font-bold">Auraminator 100% Buyer Escrow Protection</span>
               </div>
-              <ul className="space-y-1.5 text-[11px] text-zinc-500 font-sans">
-                <li>• Double-entry escrow holds funds until delivery scan verification.</li>
-                <li>• Instant cryptographic digital vault access via presigned Cloudflare R2 tokens.</li>
-                <li>• Express Shiprocket logistics with live GPS courier tracking.</li>
+              <ul className="space-y-1.5 text-[11px] text-zinc-400 font-sans">
+                <li>• <strong>Money Held in Escrow:</strong> The creator is only paid after your delivery or download is confirmed.</li>
+                <li>• <strong>Instant Digital Delivery:</strong> Access files immediately in your account after payment.</li>
+                <li>• <strong>Tracked Physical Shipping:</strong> Real-time Shiprocket courier updates straight to WhatsApp &amp; SMS.</li>
+                <li>• <strong>7-Day Dispute Protection:</strong> If anything is damaged or missing, freeze payment and request a refund.</li>
               </ul>
             </div>
           </div>

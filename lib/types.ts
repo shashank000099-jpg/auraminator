@@ -296,3 +296,80 @@ export interface Review {
   created_at: string;
   buyer?: Profile;
 }
+
+export interface ServiceIntake {
+  id: string;
+  order_id: string;
+  order_item_id: string;
+  buyer_id: string;
+  seller_id: string;
+  repo_url?: string;
+  tech_stack: string[];
+  requirements: string;
+  environment_secrets?: string;
+  delivery_sla_days: number;
+  status: 'intake_pending' | 'in_progress' | 'deliverable_submitted' | 'completed' | 'disputed';
+  github_pr_url?: string;
+  preview_url?: string;
+  handover_notes?: string;
+  submitted_at?: string;
+  completed_at?: string;
+  created_at: string;
+  updated_at: string;
+  milestones?: ServiceMilestone[];
+}
+
+export interface ServiceMilestone {
+  id: string;
+  service_intake_id: string;
+  title: string;
+  description?: string;
+  is_completed: boolean;
+  completed_at?: string;
+  created_at: string;
+}
+
+export type JobRoleCategory = 'engineering' | 'design' | 'fashion' | 'marketing' | 'ai_ml' | 'web3' | 'operations';
+export type JobType = 'full_time' | 'part_time' | 'contract' | 'freelance' | 'internship';
+export type JobApplicationStatus = 'submitted' | 'under_review' | 'shortlisted' | 'interview_scheduled' | 'accepted' | 'rejected';
+
+export interface JobPosting {
+  id: string;
+  poster_id?: string;
+  company_name: string;
+  company_logo?: string;
+  title: string;
+  slug: string;
+  role_category: JobRoleCategory;
+  job_type: JobType;
+  location: string;
+  salary_range: string;
+  description: string;
+  requirements: string[];
+  benefits: string[];
+  contact_email: string;
+  status: 'draft' | 'published' | 'closed' | 'archived';
+  created_at: string;
+  updated_at: string;
+  applicant_count?: number;
+}
+
+export interface JobApplication {
+  id: string;
+  job_id: string;
+  applicant_id?: string;
+  full_name: string;
+  email: string;
+  phone?: string;
+  portfolio_url?: string;
+  github_url?: string;
+  resume_url: string;
+  cover_note: string;
+  expected_salary?: string;
+  status: JobApplicationStatus;
+  created_at: string;
+  updated_at: string;
+  job?: JobPosting;
+}
+
+

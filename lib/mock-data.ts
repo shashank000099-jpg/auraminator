@@ -9,7 +9,7 @@ export const MOCK_PRODUCTS: Product[] = [
     description: "Architectural cut-and-sew heavyweight luxury hoodie in Pitch Black. Hand-distressed 500 GSM loopback French Terry with modular magnetic stash pockets and matte monochrome hardware.",
     product_type: "physical",
     base_price: 3499,
-    platform_fee_percent: 5.0,
+    platform_fee_percent: 15.0,
     thumbnail_url: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1200&q=80",
     media_gallery: [
       "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1200&q=80",
@@ -42,7 +42,7 @@ export const MOCK_PRODUCTS: Product[] = [
     description: "Comprehensive 3D motion shader library, WebGL tokens, React Three Fiber physics rigs, and 120+ pre-baked vector glyphs ready for immediate production deployment.",
     product_type: "digital_file",
     base_price: 1299,
-    platform_fee_percent: 5.0,
+    platform_fee_percent: 15.0,
     thumbnail_url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
     media_gallery: [
       "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80"
@@ -72,7 +72,7 @@ export const MOCK_PRODUCTS: Product[] = [
     description: "The autonomous operating system for creator enterprises, multi-brand studios, and angel syndicates. Pre-built with P&L trackers, deal flow pipelines, and client portals.",
     product_type: "digital_link",
     base_price: 899,
-    platform_fee_percent: 5.0,
+    platform_fee_percent: 15.0,
     thumbnail_url: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=1200&q=80",
     media_gallery: [
       "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=1200&q=80"
@@ -102,7 +102,7 @@ export const MOCK_PRODUCTS: Product[] = [
     description: "Tactical ripstop cargo pants featuring waterproof YKK zippers, detachable utility straps, custom gunmetal buckles, and reinforced knee articulation.",
     product_type: "physical",
     base_price: 4199,
-    platform_fee_percent: 5.0,
+    platform_fee_percent: 15.0,
     thumbnail_url: "https://images.unsplash.com/photo-1517445312882-bc9910d016b7?auto=format&fit=crop&w=1200&q=80",
     media_gallery: [
       "https://images.unsplash.com/photo-1517445312882-bc9910d016b7?auto=format&fit=crop&w=1200&q=80"
@@ -126,4 +126,256 @@ export const MOCK_PRODUCTS: Product[] = [
       { id: "var-004-34", product_id: "prod-004", sku: "MNL-CRG-34", title: "Charcoal / 34", price: 4199, inventory_count: 6, attributes: { size: "34", color: "Charcoal" }, status: "active", created_at: new Date().toISOString() },
     ],
   },
+  // ONLINE TECH & DEVELOPER SERVICES
+  {
+    id: "prod-005",
+    seller_id: "seller-004",
+    title: "Emergency Full-Stack Debug & Bug Fix Sprint (24h SLA)",
+    slug: "emergency-fullstack-debug-sprint",
+    description: "Instant emergency debugging for production web apps. We identify memory leaks, fix broken Next.js / React / Node.js API routes, resolve SSR hydration mismatches, and submit clean GitHub PRs within 24 hours.",
+    product_type: "service",
+    base_price: 4999,
+    platform_fee_percent: 15.0,
+    thumbnail_url: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1200&q=80",
+    media_gallery: [
+      "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1200&q=80"
+    ],
+    status: "published",
+    created_at: new Date(Date.now() - 36000000).toISOString(),
+    updated_at: new Date().toISOString(),
+    seller: {
+      id: "seller-004",
+      full_name: "SYNTAX LABS",
+      username: "syntaxlabs",
+      avatar_url: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
+      is_verified: true,
+      role: "seller",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+  },
+  {
+    id: "prod-006",
+    seller_id: "seller-004",
+    title: "Next.js 14 & Supabase Enterprise Architecture Sprint",
+    slug: "nextjs-supabase-architecture-sprint",
+    description: "Complete scalable backend and frontend scaffolding. Includes production Row-Level Security (RLS) policies, atomic inventory RPCs, server actions, payment route integration, and zero-trust Cloudflare R2 vault wiring in 3 days.",
+    product_type: "service",
+    base_price: 14999,
+    platform_fee_percent: 15.0,
+    thumbnail_url: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80",
+    media_gallery: [
+      "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80"
+    ],
+    status: "published",
+    created_at: new Date(Date.now() - 43200000).toISOString(),
+    updated_at: new Date().toISOString(),
+    seller: {
+      id: "seller-004",
+      full_name: "SYNTAX LABS",
+      username: "syntaxlabs",
+      avatar_url: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
+      is_verified: true,
+      role: "seller",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+  },
+  {
+    id: "prod-007",
+    seller_id: "seller-002",
+    title: "Smart Contract Security Audit & Hardening Report",
+    slug: "smart-contract-security-audit",
+    description: "Deep static and dynamic security audit for Solidity / EVM contracts. Reentrancy checks, overflow guards, gas optimization profiling, and formal cryptographic verification dossier.",
+    product_type: "service",
+    base_price: 19999,
+    platform_fee_percent: 15.0,
+    thumbnail_url: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=1200&q=80",
+    media_gallery: [
+      "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=1200&q=80"
+    ],
+    status: "published",
+    created_at: new Date(Date.now() - 50400000).toISOString(),
+    updated_at: new Date().toISOString(),
+    seller: {
+      id: "seller-002",
+      full_name: "GLYPH LABS",
+      username: "glyphlabs",
+      avatar_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+      is_verified: true,
+      role: "seller",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+  },
+  {
+    id: "prod-008",
+    seller_id: "seller-003",
+    title: "Cloudflare & AWS Cloud DevOps Pipeline Setup",
+    slug: "cloudflare-aws-devops-pipeline",
+    description: "Automated GitHub Actions CI/CD pipelines, Docker container orchestration, Cloudflare Workers & R2 zero-trust edge routing, SSL auto-renewals, and serverless observability monitoring.",
+    product_type: "service",
+    base_price: 9999,
+    platform_fee_percent: 15.0,
+    thumbnail_url: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
+    media_gallery: [
+      "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80"
+    ],
+    status: "published",
+    created_at: new Date(Date.now() - 57600000).toISOString(),
+    updated_at: new Date().toISOString(),
+    seller: {
+      id: "seller-003",
+      full_name: "AESTHETE SYSTEM",
+      username: "aesthete",
+      avatar_url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=200&q=80",
+      is_verified: true,
+      role: "seller",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+  },
 ];
+
+export const MOCK_JOBS: import("./types").JobPosting[] = [
+  {
+    id: "job-001",
+    company_name: "SYNTAX LABS",
+    company_logo: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
+    title: "Lead Full-Stack Next.js & Supabase Systems Architect",
+    slug: "lead-fullstack-nextjs-systems-architect",
+    role_category: "engineering",
+    job_type: "full_time",
+    location: "Remote (Global) / Bengaluru",
+    salary_range: "₹28,00,000 - ₹45,00,000 / year + Equity",
+    description: "Lead the core backend architecture for high-throughput sovereign commerce. You will build concurrency locking RPCs in PostgreSQL, optimize Cloudflare Workers and Edge R2 streaming, and build sub-50ms React server components.",
+    requirements: [
+      "5+ years building scalable React/Next.js App Router architectures.",
+      "Expertise in Supabase PostgreSQL, custom plpgsql RPCs, and strict Row Level Security (RLS).",
+      "Demonstrated experience with Redis atomic locking and high-concurrency payment integrations.",
+      "Deep aesthetic standard for Monochrome Brutalism and micro-spring animations."
+    ],
+    benefits: [
+      "100% Remote flexibility with flexible working hours.",
+      "High-tier hardware stipend (M3 Max MacBook Pro / Studio Displays).",
+      "Annual sovereign retreat and performance token bonus pool."
+    ],
+    contact_email: "careers@syntaxlabs.dev",
+    status: "published",
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    updated_at: new Date().toISOString(),
+    applicant_count: 8,
+  },
+  {
+    id: "job-002",
+    company_name: "GLYPH LABS",
+    company_logo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+    title: "Senior 3D Motion & WebGL Shader Technical Artist",
+    slug: "senior-3d-motion-webgl-shader-artist",
+    role_category: "design",
+    job_type: "contract",
+    location: "Remote (Global)",
+    salary_range: "₹18,00,000 - ₹32,00,000 / year or $4,000/mo",
+    description: "Design interactive WebGL, Three.js, and GLSL shaders for digital artifact vaults and interactive web drops. You will bridge procedural 3D modeling in Blender with 60fps browser rendering.",
+    requirements: [
+      "3+ years experience with Three.js, React Three Fiber (R3F), and custom GLSL fragment/vertex shaders.",
+      "Proficiency in Blender procedural materials, baking lightmaps, and low-poly optimization for GLTF/GLB.",
+      "Portfolio showcasing live interactive websites with high-performance WebGL canvas implementations."
+    ],
+    benefits: [
+      "Full ownership of visual token pipelines.",
+      "Direct profit share on curated 3D vault drop sales."
+    ],
+    contact_email: "studio@glyphlabs.xyz",
+    status: "published",
+    created_at: new Date(Date.now() - 172800000).toISOString(),
+    updated_at: new Date().toISOString(),
+    applicant_count: 5,
+  },
+  {
+    id: "job-003",
+    company_name: "KAIZEN STUDIOS",
+    company_logo: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
+    title: "Lead Cut-and-Sew Streetwear Fashion Designer & Pattern Maker",
+    slug: "lead-streetwear-apparel-designer",
+    role_category: "fashion",
+    job_type: "full_time",
+    location: "Mumbai / Bengaluru Studio",
+    salary_range: "₹15,00,000 - ₹25,00,000 / year",
+    description: "Architect heavyweight 500 GSM luxury garments from scratch. Responsibilities include tech pack drafting, sample fit development, sourcing bespoke loopback French Terry fabrics, and managing factory production runs.",
+    requirements: [
+      "Deep understanding of heavyweight knitwear (450-600 GSM), tactical hardware, and garment dyeing.",
+      "Expertise in CLO 3D or Browzwear digital pattern drafting and tech-pack preparation.",
+      "Experience interfacing with textile mills in Tirupur, Surat, and Ludhiana."
+    ],
+    benefits: [
+      "Full access to sample development atelier and cutting room.",
+      "Clothing allowance and VIP drops from every seasonal collection."
+    ],
+    contact_email: "design@kaizenstudios.in",
+    status: "published",
+    created_at: new Date(Date.now() - 259200000).toISOString(),
+    updated_at: new Date().toISOString(),
+    applicant_count: 12,
+  },
+  {
+    id: "job-004",
+    company_name: "AURAMINATOR PROTOCOL",
+    company_logo: "/favicon.svg",
+    title: "Growth Architect & Sovereign Creator Scout",
+    slug: "growth-architect-creator-scout",
+    role_category: "marketing",
+    job_type: "full_time",
+    location: "Remote / Hybrid Bengaluru",
+    salary_range: "₹20,00,000 - ₹35,00,000 / year + Performance Incentives",
+    description: "Identify and onboard top sovereign creators, elite digital 3D artists, and luxury streetwear brands onto the Auraminator marketplace engine. Drive viral drop mechanics and escrow volume.",
+    requirements: [
+      "Track record in creator economy growth, high-ticket digital product launches, or streetwear drops.",
+      "Strong personal network among designers, developers, and fashion founders.",
+      "Deep understanding of platform mechanics, split commerce, and buyer escrow guarantees."
+    ],
+    benefits: [
+      "Direct commission bonus on onboarded creator GMV volume.",
+      "Sovereign work environment with zero bureaucracy."
+    ],
+    contact_email: "partners@auraminator.in",
+    status: "published",
+    created_at: new Date(Date.now() - 345600000).toISOString(),
+    updated_at: new Date().toISOString(),
+    applicant_count: 19,
+  },
+];
+
+export const MOCK_APPLICATIONS: import("./types").JobApplication[] = [
+  {
+    id: "app-101",
+    job_id: "job-001",
+    full_name: "Rohan Varma",
+    email: "rohan.varma@devmail.com",
+    phone: "+91 98765 43210",
+    portfolio_url: "https://rohanvarma.codes",
+    github_url: "https://github.com/rohanvarma",
+    resume_url: "https://assets.auraminator.in/resumes/rohan-varma-senior-architect.pdf",
+    cover_note: "I have 6 years of experience building high-concurrency commerce systems with Next.js 14, Supabase, and Redis locks. I recently scaled an escrow checkout engine handling 50k RPM.",
+    expected_salary: "₹38,00,000 / year",
+    status: "shortlisted",
+    created_at: new Date(Date.now() - 43200000).toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "app-102",
+    job_id: "job-001",
+    full_name: "Priya Nair",
+    email: "priya.nair@frontend.dev",
+    phone: "+91 98123 45678",
+    portfolio_url: "https://priyanair.design",
+    github_url: "https://github.com/priyanair",
+    resume_url: "https://assets.auraminator.in/resumes/priya-nair-fullstack.pdf",
+    cover_note: "Specialized in micro-spring Framer Motion interactions and strict TypeScript architecture for modern SaaS and Web3 marketplaces.",
+    expected_salary: "₹32,00,000 / year",
+    status: "under_review",
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+];
+

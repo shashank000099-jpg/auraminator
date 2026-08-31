@@ -1,18 +1,18 @@
 import React from "react";
 import Link from "next/link";
 import { ShieldCheck, Activity, Terminal } from "lucide-react";
+import { AuraminatorLogo, AuraminatorIcon } from "./brand-logo";
 
 export function Footer() {
   return (
-    <footer className="border-t border-border bg-black text-zinc-400 font-mono text-xs selection:bg-white selection:text-black">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+    <footer className="border-t border-border bg-black text-zinc-400 font-mono text-xs selection:bg-white selection:text-black relative overflow-hidden">
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
           {/* Brand Col */}
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <span className="h-3 w-3 bg-white rounded-sm inline-block"></span>
-              <span className="font-bold text-white tracking-tight">AURAMINATOR</span>
-            </div>
+            <Link href="/" className="inline-block">
+              <AuraminatorLogo size="md" showTagline />
+            </Link>
             <p className="text-[11px] text-zinc-500 leading-relaxed">
               Elite multi-sided commerce engine for high-tier digital assets, curated luxury physical apparel, and bespoke creator drops.
             </p>
@@ -40,6 +40,8 @@ export function Footer() {
               <li><Link href="/seller/onboarding" className="hover:text-white transition-colors">Become a Verified Seller</Link></li>
               <li><Link href="/seller/dashboard" className="hover:text-white transition-colors">Seller Studio & Analytics</Link></li>
               <li><Link href="/seller/payouts" className="hover:text-white transition-colors">Double-Entry Escrow Ledger</Link></li>
+              <li><Link href="/jobs" className="hover:text-white transition-colors text-emerald-400 font-bold">Free Careers &amp; Tech Jobs</Link></li>
+              <li><Link href="/brand" className="hover:text-white transition-colors text-white font-bold">Brand Kit & Logos (SVG/PNG)</Link></li>
               <li><Link href="/admin/dashboard" className="hover:text-white transition-colors">Admin Mission Control</Link></li>
             </ul>
           </div>

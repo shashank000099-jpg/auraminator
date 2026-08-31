@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500" fill="none">
+  <!-- Background Circle -->
+  <circle cx="250" cy="250" r="240" fill="#0A0A0A" stroke="rgba(255,255,255,0.2)" stroke-width="4"/>
+  <circle cx="250" cy="250" r="225" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="2" stroke-dasharray="8 6"/>
+
+  <defs>
+    <!-- Text on curve path -->
+    <path id="sealTextPath" d="M 70 250 A 180 180 0 1 1 430 250 A 180 180 0 1 1 70 250" />
+    <linearGradient id="badgeTopL" x1="150" y1="180" x2="250" y2="240" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stopColor="#FFFFFF"/>
+      <stop offset="100%" stopColor="#E4E4E7"/>
+    </linearGradient>
+    <linearGradient id="badgeTopR" x1="350" y1="180" x2="250" y2="240" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stopColor="#E4E4E7"/>
+      <stop offset="100%" stopColor="#71717A"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Center Icon -->
+  <g transform="translate(0, 10)">
+    <!-- Top Roof Facets -->
+    <path d="M 250 120 L 140 185 L 250 240 Z" fill="url(#badgeTopL)" stroke="#000000" stroke-width="4"/>
+    <path d="M 250 120 L 360 185 L 250 240 Z" fill="url(#badgeTopR)" stroke="#000000" stroke-width="4"/>
+    <!-- Left & Right Pillars -->
+    <path d="M 140 185 L 250 240 L 250 370 L 140 305 Z" fill="#E4E4E7" stroke="#000000" stroke-width="4"/>
+    <path d="M 360 185 L 250 240 L 250 370 L 360 305 Z" fill="#A1A1AA" stroke="#000000" stroke-width="4"/>
+    <!-- Notch -->
+    <path d="M 250 240 L 210 295 L 250 325 L 290 295 Z" fill="#000000" stroke="#FFFFFF" stroke-width="3"/>
+    <!-- Outline -->
+    <path d="M 250 120 L 360 185 L 360 305 L 250 370 L 140 305 L 140 185 Z" fill="none" stroke="#FFFFFF" stroke-width="6"/>
+  </g>
+
+  <!-- Circular Outer Monospace Legend -->
+  <text fill="#A1A1AA" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, monospace" font-size="14" font-weight="700" letter-spacing="6px">
+    <textPath href="#sealTextPath" startOffset="50%" text-anchor="middle">
+      • AURAMINATOR • VERIFIED ESCROW PROTOCOL • 2026 •
+    </textPath>
+  </text>
+</svg>

@@ -261,6 +261,40 @@ create table if not exists public.returns (
 );
 
 -- ==========================================
+-- 6B. HASSLE-FREE TECH SERVICES & INTAKE VAULT
+-- ==========================================
+create table if not exists public.service_intakes (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid not null references public.orders(id) on delete cascade,
+  order_item_id uuid not null references public.order_items(id) on delete cascade,
+  buyer_id uuid not null references public.profiles(id),
+  seller_id uuid not null references public.profiles(id),
+  repo_url text,
+  tech_stack text[] default array[]::text[],
+  requirements text not null,
+  environment_secrets text,
+  delivery_sla_days int not null default 3,
+  status text not null default 'intake_pending' check (status in ('intake_pending', 'in_progress', 'deliverable_submitted', 'completed', 'disputed')),
+  github_pr_url text,
+  preview_url text,
+  handover_notes text,
+  submitted_at timestamptz,
+  completed_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.service_milestones (
+  id uuid primary key default gen_random_uuid(),
+  service_intake_id uuid not null references public.service_intakes(id) on delete cascade,
+  title text not null,
+  description text,
+  is_completed boolean not null default false,
+  completed_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+-- ==========================================
 -- 7. DOUBLE-ENTRY LEDGER & SETTLEMENTS
 -- ==========================================
 create table if not exists public.ledger_entries (
@@ -532,3 +566,55 @@ create policy "Reviews: Verified Buyer Insert" on public.reviews for insert with
     and o.payment_status = 'captured'
   )
 );
+
+-- ==========================================
+-- 13. FREE CREATOR & TECH JOB BOARD
+-- ==========================================
+create table if not exists public.jobs (
+  id uuid primary key default gen_random_uuid(),
+  poster_id uuid references public.profiles(id),
+  company_name text not null,
+  company_logo text,
+  title text not null,
+  slug text not null unique,
+  role_category text not null check (role_category in ('engineering', 'design', 'fashion', 'marketing', 'ai_ml', 'web3', 'operations')),
+  job_type text not null check (job_type in ('full_time', 'part_time', 'contract', 'freelance', 'internship')),
+  location text not null default 'Remote',
+  salary_range text not null,
+  description text not null,
+  requirements text[] default array[]::text[],
+  benefits text[] default array[]::text[],
+  contact_email text not null,
+  status text not null default 'published' check (status in ('draft', 'published', 'closed', 'archived')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.job_applications (
+  id uuid primary key default gen_random_uuid(),
+  job_id uuid not null references public.jobs(id) on delete cascade,
+  applicant_id uuid references public.profiles(id),
+  full_name text not null,
+  email text not null,
+  phone text,
+  portfolio_url text,
+  github_url text,
+  resume_url text not null,
+  cover_note text not null,
+  expected_salary text,
+  status text not null default 'submitted' check (status in ('submitted', 'under_review', 'shortlisted', 'interview_scheduled', 'accepted', 'rejected')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.jobs enable row level security;
+alter table public.job_applications enable row level security;
+
+create policy "Jobs: Public view published" on public.jobs for select using (status = 'published');
+create policy "Jobs: Poster manage own" on public.jobs for all using (auth.uid() = poster_id);
+create policy "Applications: Applicant view own" on public.job_applications for select using (auth.uid() = applicant_id);
+create policy "Applications: Public insert" on public.job_applications for insert with check (true);
+create policy "Applications: Recruiter manage job candidates" on public.job_applications for select using (
+  job_id in (select id from public.jobs where poster_id = auth.uid())
+);
+

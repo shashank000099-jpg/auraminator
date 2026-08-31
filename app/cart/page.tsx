@@ -122,14 +122,20 @@ export default function CartPage() {
 
                 <Link href="/checkout" className="block w-full pt-2">
                   <Button variant="primary" size="lg" className="w-full flex items-center justify-between">
-                    <span>CHECKOUT</span>
+                    <span>PROCEED TO SECURE CHECKOUT</span>
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
 
-                <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 pt-2 border-t border-border">
-                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-                  <span>100% Guaranteed by Auraminator Route Escrow</span>
+                <div className="space-y-2 pt-2 border-t border-border text-[10px]">
+                  <div className="flex items-center gap-1.5 text-emerald-400">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    <span>100% Escrow Protection • Zero Risk</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-zinc-500 font-sans">
+                    <Clock className="h-3 w-3 text-zinc-400" />
+                    <span>Inventory is held for 15 mins to guarantee stock for you.</span>
+                  </div>
                 </div>
               </div>
             </div>

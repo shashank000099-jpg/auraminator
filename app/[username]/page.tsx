@@ -10,7 +10,7 @@ import { Product } from "@/lib/types";
 
 export default function CreatorStorefrontPage() {
   const params = useParams();
-  const username = params.username as string;
+  const username = (params?.username as string) || "kaizen";
 
   const [products, setProducts] = useState<Product[]>([]);
   const [sellerName, setSellerName] = useState("KAIZEN STUDIOS");

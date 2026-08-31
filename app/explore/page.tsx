@@ -49,13 +49,13 @@ function ExploreContent() {
         {/* Header */}
         <div className="border-b border-border pb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight uppercase">MARKETPLACE VAULT</h1>
-            <p className="text-xs font-mono text-zinc-500 mt-1">
-              Explore curated digital assets, bespoke cut-and-sew streetwear, and verified creator tooling.
+            <h1 className="text-3xl font-extrabold tracking-tight uppercase">MARKETPLACE RELEASES</h1>
+            <p className="text-xs font-mono text-zinc-400 mt-1">
+              Browse verified drops: 3D shader files, luxury 500 GSM apparel, Notion OS systems, and 1-on-1 strategy sprints.
             </p>
           </div>
-          <div className="text-xs font-mono text-zinc-400">
-            SHOWING <strong className="text-white">{filteredProducts.length}</strong> ACTIVE RELEASES
+          <div className="text-xs font-mono text-zinc-400 bg-surface px-3 py-1.5 rounded-lg border border-border">
+            SHOWING <strong className="text-white">{filteredProducts.length}</strong> VERIFIED DROPS
           </div>
         </div>
 
@@ -65,21 +65,21 @@ function ExploreContent() {
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
             <input
               type="text"
-              placeholder="Search drops, tokens, sellers, or SKUs..."
+              placeholder="Search by product name, 3D asset, streetwear, or creator..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="h-10 w-full rounded-lg border border-border bg-surface pl-10 pr-4 text-xs font-mono text-white placeholder:text-zinc-600 focus:border-white focus:outline-none transition-colors"
+              className="h-10 w-full rounded-lg border border-border bg-surface pl-10 pr-4 text-xs font-mono text-white placeholder:text-zinc-500 focus:border-white focus:outline-none transition-colors"
             />
           </div>
 
           <div className="flex items-center gap-2 w-full md:w-auto font-mono text-xs overflow-x-auto pb-2 md:pb-0">
             {/* Category pills */}
             {[
-              { id: "all", label: "ALL" },
-              { id: "digital_file", label: "DIGITAL FILES" },
-              { id: "physical", label: "STREETWEAR" },
-              { id: "digital_link", label: "NOTION/WORKSPACES" },
-              { id: "service", label: "SERVICES" },
+              { id: "all", label: "ALL DROPS" },
+              { id: "physical", label: "STREETWEAR (Physical)" },
+              { id: "service", label: "TECH SERVICES (Debug & Dev)" },
+              { id: "digital_file", label: "DIGITAL VAULT (Files)" },
+              { id: "digital_link", label: "NOTION WORKSPACES" },
             ].map((type) => (
               <button
                 key={type.id}

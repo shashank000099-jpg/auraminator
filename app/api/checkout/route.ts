@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
 
     const orderItemsPayload = items.map((item: CheckoutItem) => {
       const subtotal = item.unitPrice * item.quantity;
-      const platformFeePercent = 5.0; // 5% platform fee
+      const platformFeePercent = 15.0; // 15% platform commission
       const platformFee = (subtotal * platformFeePercent) / 100;
       const sellerShare = subtotal - platformFee;
 

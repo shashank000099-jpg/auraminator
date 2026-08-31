@@ -17,6 +17,7 @@ import {
 import { formatINR } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { AICopilotModal } from "@/components/ai-copilot-modal";
+import { AuraminatorIcon, AuraminatorLogo } from "@/components/brand-logo";
 
 export default function SellerDashboardPage() {
   const [analytics, setAnalytics] = useState<any>({
@@ -72,7 +73,7 @@ export default function SellerDashboardPage() {
         <div className="border-b border-border pb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-surface px-3 py-1 text-[11px] text-zinc-300 mb-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+              <AuraminatorIcon size={14} />
               <span>KAIZEN STUDIOS • VERIFIED CREATOR STUDIO</span>
             </div>
             <h1 className="text-3xl font-extrabold uppercase tracking-tight text-white">
@@ -80,7 +81,13 @@ export default function SellerDashboardPage() {
             </h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <Link href="/seller/services">
+              <Button variant="outline" size="md" className="flex items-center gap-1.5 border-emerald-500/30 text-emerald-400">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                <span>TECH SERVICE ORDERS</span>
+              </Button>
+            </Link>
             <Button
               variant="outline"
               size="md"

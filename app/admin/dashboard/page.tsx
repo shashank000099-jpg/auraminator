@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { formatINR } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { AuraminatorLogo, AuraminatorIcon } from "@/components/brand-logo";
 
 export default function AdminMissionControl() {
   const [kycRequests, setKycRequests] = useState([
@@ -72,7 +73,8 @@ export default function AdminMissionControl() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
+            <AuraminatorLogo size="sm" />
             <span className="inline-flex items-center gap-1.5 rounded-lg bg-surface border border-border px-3 py-1.5 text-xs text-emerald-400">
               <Activity className="h-3.5 w-3.5" />
               <span>Telemetry: 100% Operational</span>

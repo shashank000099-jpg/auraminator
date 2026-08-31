@@ -7,6 +7,7 @@ import { formatINR } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ShieldCheck, Lock, CheckCircle2, ArrowRight, Sparkles, AlertCircle } from "lucide-react";
+import { AuraminatorIcon, AuraminatorLogo } from "@/components/brand-logo";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -169,13 +170,16 @@ export default function CheckoutPage() {
     <div className="min-h-screen bg-black text-white p-4 sm:p-8">
       <div className="mx-auto max-w-5xl space-y-8">
         {/* Header */}
-        <div className="border-b border-border pb-6 flex items-center justify-between">
+        <div className="border-b border-border pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-surface px-3 py-1 text-[11px] font-mono text-zinc-300 mb-2">
               <Lock className="h-3 w-3 text-emerald-400" />
               <span>256-BIT ENCRYPTED RAZORPAY ROUTE ESCROW</span>
             </div>
             <h1 className="text-3xl font-extrabold tracking-tight uppercase">SECURE CHECKOUT</h1>
+          </div>
+          <div>
+            <AuraminatorLogo size="md" />
           </div>
         </div>
 
@@ -225,15 +229,23 @@ export default function CheckoutPage() {
 
             {/* Payment Method Badge */}
             <div className="rounded-xl border border-border bg-surface p-5 space-y-3 font-mono text-xs">
-              <h2 className="font-bold uppercase text-white tracking-wider">
-                2. Payment Gateway & Split Processing
-              </h2>
-              <div className="rounded-lg border border-white/20 bg-surface-elevated p-3.5 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-3 w-3 rounded-full bg-emerald-400"></div>
-                  <span className="font-bold text-white">Razorpay Route Multi-Split (UPI, Cards, NetBanking)</span>
+              <div className="flex items-center justify-between">
+                <h2 className="font-bold uppercase text-white tracking-wider">
+                  2. Secure Payment Gateway (Razorpay Route)
+                </h2>
+                <span className="text-[10px] text-emerald-400 font-bold">100% Escrow Protected</span>
+              </div>
+              <div className="rounded-lg border border-white/20 bg-surface-elevated p-3.5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse"></div>
+                    <span className="font-bold text-white text-xs">UPI, Cards, Google Pay, PhonePe, NetBanking</span>
+                  </div>
+                  <span className="text-[10px] text-zinc-400 font-sans">Instant Escrow</span>
                 </div>
-                <span className="text-[10px] text-zinc-400">Instant Escrow</span>
+                <p className="text-[11px] text-zinc-400 font-sans leading-tight">
+                  Your payment is locked safely in escrow. The creator is only paid once physical delivery is verified by the courier or digital access is granted.
+                </p>
               </div>
             </div>
           </div>
@@ -303,8 +315,8 @@ export default function CheckoutPage() {
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span>Platform Fee (5%)</span>
-                  <span className="text-zinc-500">Included</span>
+                  <span>Platform Fee (15%)</span>
+                  <span className="text-zinc-500">Included in Escrow</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Shipping & Delivery</span>

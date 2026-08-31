@@ -8,6 +8,14 @@ export const metadata: Metadata = {
   title: "AURAMINATOR.IN • Elite Multi-Sided Commerce Engine",
   description: "Enterprise multi-vendor platform for high-tier digital assets, luxury cut-and-sew streetwear drops, and verified creator vaults.",
   keywords: ["auraminator", "brutalism", "streetwear", "digital vault", "creator economy", "escrow commerce"],
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: [
+      { url: "/apple-icon", sizes: "180x180", type: "image/png" },
+    ],
+  },
 };
 
 export default function RootLayout({
