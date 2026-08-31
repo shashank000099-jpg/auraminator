@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Compute Totals & Multi-Vendor Splits
-    let totalGross = 0;
+    let itemsSubtotal = 0;
     let totalPlatformCut = 0;
     let totalSellerNet = 0;
 
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
       const platformFee = (subtotal * platformFeePercent) / 100;
       const sellerShare = subtotal - platformFee;
 
-      totalGross += subtotal;
+      itemsSubtotal += subtotal;
       totalPlatformCut += platformFee;
       totalSellerNet += sellerShare;
 
@@ -86,9 +86,16 @@ export async function POST(req: NextRequest) {
 
     let discountAmount = 0;
     if (couponCode && couponCode.toUpperCase() === "AURA10") {
-      discountAmount = Math.round(totalGross * 0.1);
-      totalGross -= discountAmount;
+      discountAmount = Math.round(itemsSubtotal * 0.1);
     }
+
+    const hasPhysicalItems = items.some((i: CheckoutItem) => i.productType === "physical");
+    // Buyer pays shipping fee (₹149 for physical courier delivery, ₹0 for digital/services)
+    const shippingFee = body.shippingFee !== undefined ? body.shippingFee : (hasPhysicalItems ? 149 : 0);
+    const discountedBase = Math.max(0, itemsSubtotal - discountAmount);
+    // Buyer pays Razorpay 2.36% Gateway Fee (2% + 18% GST)
+    const gatewayFee = body.gatewayFee !== undefined ? body.gatewayFee : Math.round((discountedBase + shippingFee) * 0.0236);
+    const totalGross = discountedBase + shippingFee + gatewayFee;
 
     // 3. Create Order in Database
     const orderId = uuidv4();
@@ -98,6 +105,9 @@ export async function POST(req: NextRequest) {
         id: orderId,
         buyer_id: buyerId,
         total_amount: totalGross,
+        items_subtotal: itemsSubtotal,
+        shipping_fee: shippingFee,
+        gateway_fee: gatewayFee,
         total_platform_cut: totalPlatformCut,
         total_seller_net: totalSellerNet,
         payment_status: "pending",

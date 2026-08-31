@@ -6,16 +6,18 @@ import { useCartStore } from "@/lib/store/cart-store";
 import { formatINR } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ShieldCheck, Lock, CheckCircle2, ArrowRight, Sparkles, AlertCircle } from "lucide-react";
+import { ShieldCheck, Lock, CheckCircle2, ArrowRight, Sparkles, AlertCircle, Truck, CreditCard } from "lucide-react";
 import { AuraminatorIcon, AuraminatorLogo } from "@/components/brand-logo";
+import { useAuth } from "@/lib/context/auth-context";
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, getTotalAmount, clearCart, anonymousSessionId } = useCartStore();
+  const { user } = useAuth();
 
-  const [fullName, setFullName] = useState("Alex Mercer");
+  const [fullName, setFullName] = useState(user?.fullName || "Alex Mercer");
   const [phone, setPhone] = useState("9876543210");
-  const [email, setEmail] = useState("alex@auraminator.in");
+  const [email, setEmail] = useState(user?.email || "alex@auraminator.in");
   const [addressLine1, setAddressLine1] = useState("102 Silicon Cyber Heights, Indiranagar");
   const [city, setCity] = useState("Bengaluru");
   const [state, setState] = useState("Karnataka");
@@ -30,7 +32,14 @@ export default function CheckoutPage() {
   const [orderCompleted, setOrderCompleted] = useState<any>(null);
 
   const subtotal = getTotalAmount();
-  const finalTotal = Math.max(0, subtotal - appliedDiscount);
+  const hasPhysicalItems = items.some((item) => item.product.product_type === "physical");
+  
+  // Buyer Pays Shipping & Razorpay Gateway Fee
+  const shippingFee = hasPhysicalItems ? 149 : 0; // ₹149 Tracked Courier for physical streetwear, ₹0 for digital/services
+  const discountedSubtotal = Math.max(0, subtotal - appliedDiscount);
+  // Razorpay Gateway Fee: 2% + 18% GST = 2.36%
+  const gatewayFee = Math.round((discountedSubtotal + shippingFee) * 0.0236);
+  const finalTotal = discountedSubtotal + shippingFee + gatewayFee;
 
   const handleApplyCoupon = () => {
     if (!couponCode) return;
@@ -72,6 +81,8 @@ export default function CheckoutPage() {
           postalCode,
           country: "IN",
         },
+        shippingFee,
+        gatewayFee,
         couponCode: appliedDiscount > 0 ? couponCode : null,
         sessionId: anonymousSessionId,
       };
@@ -88,7 +99,7 @@ export default function CheckoutPage() {
         throw new Error(data.error || "Payment initialization failed");
       }
 
-      // Simulate payment capture webhook for instantaneous local testing
+      // Simulate payment capture webhook for instantaneous testing
       await fetch("/api/webhooks/payments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -111,6 +122,8 @@ export default function CheckoutPage() {
       setOrderCompleted({
         orderId: data.orderId,
         amount: finalTotal,
+        shippingFee,
+        gatewayFee,
       });
 
       clearCart();
@@ -140,16 +153,20 @@ export default function CheckoutPage() {
 
           <div className="rounded-xl border border-border bg-surface-elevated p-4 text-xs space-y-2 text-left">
             <div className="flex justify-between">
-              <span className="text-zinc-500">Amount Paid:</span>
+              <span className="text-zinc-500">Total Amount Paid:</span>
               <span className="font-bold text-white">{formatINR(orderCompleted.amount)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-zinc-500">Digital Vault Access:</span>
-              <span className="text-emerald-400 font-bold">Instantly Issued</span>
+            <div className="flex justify-between text-zinc-400 text-[11px]">
+              <span>• Shipping Fee (Buyer Paid):</span>
+              <span>{orderCompleted.shippingFee > 0 ? formatINR(orderCompleted.shippingFee) : "Free (Digital)"}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-zinc-500">Shipping Partner:</span>
-              <span className="text-white">Shiprocket Surface</span>
+            <div className="flex justify-between text-zinc-400 text-[11px]">
+              <span>• Razorpay Gateway Fee (Buyer Paid):</span>
+              <span>{formatINR(orderCompleted.gatewayFee)}</span>
+            </div>
+            <div className="flex justify-between pt-2 border-t border-white/10">
+              <span className="text-zinc-500">Escrow Security:</span>
+              <span className="text-emerald-400 font-bold">100% Protected</span>
             </div>
           </div>
 
@@ -159,7 +176,7 @@ export default function CheckoutPage() {
             onClick={() => router.push("/account")}
             className="w-full"
           >
-            VIEW PORTFOLIO & DOWNLOADS
+            VIEW PORTFOLIO &amp; ORDERS
           </Button>
         </div>
       </div>
@@ -188,7 +205,7 @@ export default function CheckoutPage() {
           <div className="lg:col-span-7 space-y-6">
             <div className="rounded-xl border border-border bg-surface p-6 space-y-4">
               <h2 className="text-sm font-mono font-bold uppercase text-white tracking-wider border-b border-border pb-3">
-                1. Shipping & Logistics Destination
+                1. Shipping &amp; Logistics Destination
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -244,7 +261,7 @@ export default function CheckoutPage() {
                   <span className="text-[10px] text-zinc-400 font-sans">Instant Escrow</span>
                 </div>
                 <p className="text-[11px] text-zinc-400 font-sans leading-tight">
-                  Your payment is locked safely in escrow. The creator is only paid once physical delivery is verified by the courier or digital access is granted.
+                  Your payment is locked safely in escrow. The creator is only paid once physical delivery is verified by the courier, service PR is accepted, or digital vault access is granted.
                 </p>
               </div>
             </div>
@@ -254,7 +271,7 @@ export default function CheckoutPage() {
           <div className="lg:col-span-5 space-y-6">
             <div className="rounded-xl border border-border bg-surface p-6 space-y-4 font-mono text-xs">
               <h2 className="font-bold uppercase text-white tracking-wider border-b border-border pb-3">
-                Order Ledger
+                Order Ledger Breakdown
               </h2>
 
               {/* Items summary */}
@@ -302,29 +319,46 @@ export default function CheckoutPage() {
                 )}
               </div>
 
-              {/* Pricing Breakdown */}
-              <div className="pt-3 border-t border-border space-y-2 text-zinc-400">
+              {/* Transparent Pricing Breakdown: Buyer Pays Shipping & Razorpay Fee */}
+              <div className="pt-3 border-t border-border space-y-2.5 text-zinc-400 text-xs">
                 <div className="flex justify-between">
-                  <span>Gross Order Value</span>
-                  <span>{formatINR(subtotal)}</span>
+                  <span>Gross Items Subtotal</span>
+                  <span className="text-white">{formatINR(subtotal)}</span>
                 </div>
+
                 {appliedDiscount > 0 && (
                   <div className="flex justify-between text-emerald-400">
                     <span>Drop Discount</span>
                     <span>-{formatINR(appliedDiscount)}</span>
                   </div>
                 )}
-                <div className="flex justify-between">
-                  <span>Platform Fee (15%)</span>
-                  <span className="text-zinc-500">Included in Escrow</span>
+
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-1.5">
+                    <Truck className="h-3.5 w-3.5 text-zinc-400" />
+                    <span>Shipping &amp; Delivery (Courier)</span>
+                  </div>
+                  <span className={shippingFee > 0 ? "text-white font-bold" : "text-emerald-400 font-bold"}>
+                    {shippingFee > 0 ? formatINR(shippingFee) : "Free (Digital / Service)"}
+                  </span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Shipping & Delivery</span>
-                  <span className="text-emerald-400">Free Express</span>
+
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-1.5">
+                    <CreditCard className="h-3.5 w-3.5 text-zinc-400" />
+                    <span>Razorpay Processing Fee (2.36%)</span>
+                  </div>
+                  <span className="text-white font-bold">{formatINR(gatewayFee)}</span>
                 </div>
+
+                <div className="flex justify-between text-zinc-500 text-[11px]">
+                  <span>Platform Escrow Coverage (15%)</span>
+                  <span>Included in Seller Escrow</span>
+                </div>
+
                 <div className="flex justify-between text-white font-bold text-base pt-3 border-t border-border">
-                  <span>Payable Amount</span>
-                  <span>{formatINR(finalTotal)}</span>
+                  <span>Total Payable Amount</span>
+                  <span className="text-emerald-400">{formatINR(finalTotal)}</span>
                 </div>
               </div>
 
@@ -336,7 +370,7 @@ export default function CheckoutPage() {
                 disabled={items.length === 0}
                 className="w-full"
               >
-                PAY & AUTHORIZE ESCROW
+                PAY {formatINR(finalTotal)} &amp; AUTHORIZE ESCROW
               </Button>
 
               <div className="flex items-center gap-2 text-[10px] text-zinc-500 pt-2 border-t border-border font-sans">

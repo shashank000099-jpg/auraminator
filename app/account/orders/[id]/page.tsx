@@ -67,12 +67,13 @@ export default function OrderDetailsPage() {
               </p>
             </div>
             <div className="text-left sm:text-right">
-              <span className="text-[10px] text-zinc-500 uppercase">Total Escrow Amount</span>
-              <p className="text-xl font-bold text-white">{formatINR(3499)}</p>
+              <span className="text-[10px] text-zinc-500 uppercase">Total Amount Paid</span>
+              <p className="text-xl font-bold text-white">{formatINR(3734)}</p>
+              <span className="text-[10px] text-emerald-400">Escrow Locked</span>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
             <div className="rounded-lg border border-white/5 bg-surface-elevated p-3 space-y-1">
               <p className="text-[10px] text-zinc-500 uppercase">Delivery Destination</p>
               <p className="font-bold text-white">Alex Mercer</p>
@@ -82,12 +83,30 @@ export default function OrderDetailsPage() {
             </div>
 
             <div className="rounded-lg border border-white/5 bg-surface-elevated p-3 space-y-1">
+              <p className="text-[10px] text-zinc-500 uppercase">Itemized Payment Breakdown</p>
+              <div className="text-[11px] text-zinc-400 space-y-0.5 font-sans">
+                <div className="flex justify-between">
+                  <span>Hoodie Subtotal:</span>
+                  <span className="text-white">{formatINR(3499)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Shipping Fee (Buyer Paid):</span>
+                  <span className="text-white">{formatINR(149)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Razorpay Fee (Buyer Paid):</span>
+                  <span className="text-white">{formatINR(86)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-white/5 bg-surface-elevated p-3 space-y-1">
               <p className="text-[10px] text-zinc-500 uppercase">Escrow Settlement Status</p>
               <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
                 <CheckCircle2 className="h-3.5 w-3.5" />
-                <span>Held in Pending Ledger (Releases on Delivery)</span>
+                <span>Pending Delivery Verification</span>
               </div>
-              <p className="text-zinc-400 font-sans text-[11px]">Protected by Razorpay Route Multi-Split</p>
+              <p className="text-zinc-400 font-sans text-[11px]">Creator payout (85% net) releases upon courier AWB scan.</p>
             </div>
           </div>
         </div>

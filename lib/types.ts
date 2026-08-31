@@ -211,6 +211,9 @@ export interface Order {
   id: string;
   buyer_id: string;
   total_amount: number;
+  items_subtotal?: number;
+  shipping_fee?: number;
+  gateway_fee?: number;
   total_platform_cut: number;
   total_seller_net: number;
   payment_status: PaymentStatus;

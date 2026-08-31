@@ -6,7 +6,10 @@ import { motion } from "framer-motion";
 import { Package, Download, Heart, Settings, ShieldCheck, ArrowUpRight, Lock, ExternalLink, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+import { useAuth } from "@/lib/context/auth-context";
+
 export default function BuyerAccountPage() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<"orders" | "library" | "settings">("orders");
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
@@ -36,12 +39,22 @@ export default function BuyerAccountPage() {
         {/* Header */}
         <div className="border-b border-white/[0.08] pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
+            <span className="text-[10px] font-mono text-zinc-500 uppercase">
+              {user ? `Signed in as ${user.fullName} (${user.email})` : "Guest Portfolio Mode"}
+            </span>
             <h1 className="text-3xl font-bold tracking-tight">Buyer Account &amp; Library</h1>
             <p className="text-xs font-mono text-zinc-400 mt-1">
               Track live courier parcels, download your purchased digital files, and manage your account.
             </p>
           </div>
           <div className="flex gap-2 font-mono text-xs">
+            {!user && (
+              <Link href="/auth/login?redirect=/account">
+                <Button variant="outline" size="sm">
+                  Sign In
+                </Button>
+              </Link>
+            )}
             <button
               onClick={() => setActiveTab("orders")}
               className={`px-4 py-2 rounded-lg transition ${

@@ -178,15 +178,19 @@ export function CartDrawer() {
                 <div className="border-t border-border p-6 bg-surface space-y-4">
                   <div className="space-y-1.5 font-mono text-xs">
                     <div className="flex justify-between text-zinc-400">
-                      <span>Subtotal</span>
-                      <span>{formatINR(total)}</span>
+                      <span>Items Subtotal</span>
+                      <span className="text-white">{formatINR(total)}</span>
                     </div>
-                    <div className="flex justify-between text-zinc-400">
-                      <span>Platform Escrow Fee (5%)</span>
-                      <span className="text-zinc-500">Included</span>
+                    <div className="flex justify-between text-zinc-400 text-[11px]">
+                      <span>Shipping &amp; Razorpay Fee</span>
+                      <span className="text-zinc-500">Added at Checkout</span>
+                    </div>
+                    <div className="flex justify-between text-zinc-400 text-[11px]">
+                      <span>Escrow Protection (15%)</span>
+                      <span className="text-emerald-400 font-bold">Included</span>
                     </div>
                     <div className="flex justify-between text-white font-bold pt-2 border-t border-border text-sm">
-                      <span>Total Due</span>
+                      <span>Estimated Total</span>
                       <span>{formatINR(total)}</span>
                     </div>
                   </div>

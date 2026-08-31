@@ -37,6 +37,8 @@ export default function NewProductDropPage() {
   const [thumbnailUrl, setThumbnailUrl] = useState(
     "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1200&q=80"
   );
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState("");
+  const [galleryUrls, setGalleryUrls] = useState("");
 
   // Service Specific Fields
   const [serviceSlaDays, setServiceSlaDays] = useState("1");
@@ -91,7 +93,7 @@ export default function NewProductDropPage() {
         base_price: priceNum,
         platform_fee_percent: 15.0,
         thumbnail_url: thumbnailUrl,
-        media_gallery: [thumbnailUrl],
+        media_gallery: [thumbnailUrl, ...galleryUrls.split(",").map((u) => u.trim()).filter(Boolean)],
         variants:
           productType === "physical"
             ? [
@@ -243,11 +245,28 @@ export default function NewProductDropPage() {
               />
             </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                label="Primary Thumbnail Image Link (URL)"
+                required
+                placeholder="https://images.unsplash.com/... or Cloudflare R2 link"
+                value={thumbnailUrl}
+                onChange={(e) => setThumbnailUrl(e.target.value)}
+              />
+
+              <Input
+                label="Video Preview / Reel Link (URL)"
+                placeholder="https://domain.com/preview.mp4 or YouTube / Vimeo link"
+                value={videoPreviewUrl}
+                onChange={(e) => setVideoPreviewUrl(e.target.value)}
+              />
+            </div>
+
             <Input
-              label="Thumbnail Media URL"
-              required
-              value={thumbnailUrl}
-              onChange={(e) => setThumbnailUrl(e.target.value)}
+              label="Additional Media Gallery Image Links (Comma-separated URLs)"
+              placeholder="https://image1.jpg, https://image2.jpg, https://image3.jpg"
+              value={galleryUrls}
+              onChange={(e) => setGalleryUrls(e.target.value)}
             />
           </div>
 

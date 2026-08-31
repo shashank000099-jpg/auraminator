@@ -103,19 +103,19 @@ export default function CartPage() {
 
                 <div className="space-y-2 text-zinc-400">
                   <div className="flex justify-between">
-                    <span>Subtotal</span>
+                    <span>Items Subtotal</span>
                     <span className="text-white">{formatINR(total)}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Platform Escrow</span>
-                    <span className="text-zinc-500">Included</span>
+                  <div className="flex justify-between text-[11px]">
+                    <span>Shipping &amp; Razorpay Fee</span>
+                    <span className="text-zinc-400">Calculated at Checkout</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Shipping</span>
-                    <span className="text-emerald-400">Free Express</span>
+                  <div className="flex justify-between text-[11px]">
+                    <span>Escrow Protection</span>
+                    <span className="text-emerald-400">Included</span>
                   </div>
                   <div className="flex justify-between text-white font-bold text-base border-t border-border pt-3">
-                    <span>Total Amount</span>
+                    <span>Estimated Subtotal</span>
                     <span>{formatINR(total)}</span>
                   </div>
                 </div>
