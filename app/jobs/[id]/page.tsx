@@ -72,8 +72,50 @@ export default function JobDetailPage() {
     }
   };
 
+  const jobSchemaJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "JobPosting",
+    title: job.title,
+    description: job.description,
+    identifier: {
+      "@type": "PropertyValue",
+      name: job.company_name,
+      value: job.id,
+    },
+    datePosted: job.created_at || new Date().toISOString(),
+    validThrough: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
+    employmentType: job.job_type === "contract" ? "CONTRACTOR" : "FULL_TIME",
+    hiringOrganization: {
+      "@type": "Organization",
+      name: job.company_name,
+      sameAs: "https://auraminator.in/jobs",
+      logo: job.company_logo,
+    },
+    jobLocation: {
+      "@type": "Place",
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: job.location || "Remote",
+        addressCountry: "IN",
+      },
+    },
+    baseSalary: {
+      "@type": "MonetaryAmount",
+      currency: "INR",
+      value: {
+        "@type": "QuantitativeValue",
+        value: job.salary_range || "Competitive",
+        unitText: "YEAR",
+      },
+    },
+  };
+
   return (
     <div className="min-h-screen bg-black text-white p-4 sm:p-8 font-mono selection:bg-white selection:text-black">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jobSchemaJsonLd) }}
+      />
       <div className="mx-auto max-w-5xl space-y-8">
         {/* Header */}
         <div className="border-b border-border pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { slugify } from "@/lib/utils";
 import { v4 as uuidv4 } from "uuid";
+import { generateAutomatedSeo } from "@/lib/gemini-seo";
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,6 +30,15 @@ export async function POST(req: NextRequest) {
     const productId = uuidv4();
     const slug = `${slugify(title)}-${uuidv4().substring(0, 6)}`;
 
+    // Automatically analyze title & description with Gemini AI for instant top-tier SEO/GEO
+    const autoSeo = await generateAutomatedSeo({
+      title,
+      description: description || "",
+      type: product_type,
+      priceOrSalary: base_price,
+      brandOrCompany: "Auraminator Creator",
+    });
+
     const { data: product, error: prodErr } = await supabase
       .from("products")
       .insert({
@@ -39,9 +49,10 @@ export async function POST(req: NextRequest) {
         description: description || "",
         product_type,
         base_price: parseFloat(base_price),
-        platform_fee_percent: 5.0,
+        platform_fee_percent: 15.0,
         thumbnail_url: thumbnail_url || "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1200&q=80",
         media_gallery: media_gallery || [],
+        seo_metadata: autoSeo,
         status: "published",
       })
       .select()

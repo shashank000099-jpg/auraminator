@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { MOCK_JOBS } from "@/lib/mock-data";
 import { v4 as uuidv4 } from "uuid";
+import { generateAutomatedSeo } from "@/lib/gemini-seo";
 
 export async function GET(req: NextRequest) {
   try {
@@ -83,6 +84,16 @@ export async function POST(req: NextRequest) {
     const supabase = createServerSupabase();
     const { data: { user } } = await supabase.auth.getUser();
 
+    // Automatically generate Google for Jobs SEO & GEO metadata with Gemini AI
+    const autoSeo = await generateAutomatedSeo({
+      title,
+      description,
+      type: "job",
+      priceOrSalary: salary_range,
+      techStackOrLocation: location || "Remote / India",
+      brandOrCompany: company_name,
+    });
+
     const newJob = {
       id: uuidv4(),
       poster_id: user?.id || "demo-poster-uuid-0001",
@@ -98,6 +109,7 @@ export async function POST(req: NextRequest) {
       requirements: requirements || [],
       benefits: benefits || [],
       contact_email,
+      seo_metadata: autoSeo,
       status: "published",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -106,7 +118,7 @@ export async function POST(req: NextRequest) {
 
     const { data, error } = await supabase.from("jobs").insert(newJob).select().single();
 
-    return NextResponse.json({ success: true, job: data || newJob });
+    return NextResponse.json({ success: true, job: data || newJob, seo: autoSeo });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

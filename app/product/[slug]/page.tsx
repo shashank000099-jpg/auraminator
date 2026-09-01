@@ -134,8 +134,36 @@ export default function ProductDetailPage() {
 
   const isDigitalAssetOrSaaS = ["saas", "app", "website", "source_code", "social_account"].includes(product.product_type);
 
+  const productSchemaJsonLd = {
+    "@context": "https://schema.org",
+    "@type": isDigitalAssetOrSaaS ? "SoftwareApplication" : "Product",
+    name: product.title,
+    description: product.description,
+    image: [product.thumbnail_url],
+    sku: `AURA-${product.id.slice(0, 8)}`,
+    brand: {
+      "@type": "Brand",
+      name: "Auraminator",
+    },
+    offers: {
+      "@type": "Offer",
+      url: `https://auraminator.in/product/${product.slug}`,
+      priceCurrency: "INR",
+      price: currentPrice,
+      availability: "https://schema.org/InStock",
+      seller: {
+        "@type": "Organization",
+        name: product.seller?.username || "Auraminator Verified Creator",
+      },
+    },
+  };
+
   return (
     <div className="min-h-screen bg-black text-white p-4 sm:p-8 font-sans selection:bg-white selection:text-black">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchemaJsonLd) }}
+      />
       <div className="mx-auto max-w-6xl space-y-10">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 font-mono text-xs text-zinc-500">

@@ -25,6 +25,18 @@ It combines **7 distinct commercial engines** with a zero-leakage **Anti-Circumv
 
 ---
 
+### Automated Gemini AI SEO & GEO Optimization Engine:
+- **Instant Background Execution**: Jab bhi koi seller/creator koi SaaS, mobile app, source code, streetwear drop, ya free career job post karta hai, **Google Gemini AI backend me automatically title & description analyze karta hai**.
+- **Zero Manual Work for Sellers**: Gemini AI automatically generate karta hai:
+  1. `seo_title` (< 60 chars high-CTR Google search title).
+  2. `seo_description` (< 155 chars conversion-focused meta description).
+  3. `keywords` (12+ high-volume search tags & regional GEO tags like Delhi NCR, Mumbai, Bangalore, US, Global).
+  4. `schema_json_ld` (Valid Google Schema.org structured data: `SoftwareApplication`, `JobPosting`, `Product`, or `Service`).
+  5. `geo_region` & `geo_placename` (Targeted Indian & Global indexation).
+- **Core Platform Dynamic SEO**: Next.js 14 dynamic sitemap (`/sitemap.xml`), robots.txt (`/robots.txt`), OpenGraph social cards, Twitter cards, and Google for Jobs schema are fully active!
+
+---
+
 ## 2. THE 15% PLATFORM COMMISSION & ESCROW MODEL
 
 ### How Auraminator Generates Revenue
