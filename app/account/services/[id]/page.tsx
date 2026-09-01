@@ -136,6 +136,33 @@ export default function ServiceWorkspacePage() {
           </div>
         </div>
 
+        {/* BUYER DISPATCH STATUS (SELLER CONTACTS BUYER) */}
+        <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-6 space-y-4 brutalist-card">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-emerald-500/20 pb-3">
+            <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase">
+              <ShieldCheck className="h-4 w-4" />
+              <span>ESCROW LOCKED • DEVELOPER DISPATCHED TO CONTACT YOU</span>
+            </div>
+            <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-mono font-bold">
+              ESCROW DEPOSIT VERIFIED
+            </span>
+          </div>
+
+          <p className="text-xs text-zinc-300 font-sans leading-relaxed">
+            Your payment of <strong className="text-white">₹4,999</strong> is securely locked in Auraminator Escrow. Your verified contact details and requirements have been securely delivered to <strong className="text-white">SYNTAX LABS (Verified Creator)</strong>.
+          </p>
+
+          <div className="rounded-lg border border-white/10 bg-black/50 p-4 space-y-2 text-xs font-mono">
+            <div className="flex items-center gap-2 text-emerald-400 font-bold">
+              <Clock className="h-4 w-4 animate-spin" />
+              <span>ENGINEER WILL CONTACT YOU DIRECTLY VIA WHATSAPP / CALL / EMAIL</span>
+            </div>
+            <p className="text-[11px] text-zinc-400 font-sans leading-relaxed">
+              The assigned engineer has your contact dossier and will reach out within the 24h SLA window to coordinate the code fix. Once they submit their GitHub Pull Request below, test it and click &quot;Accept &amp; Release Escrow&quot; to release their 85% payout.
+            </p>
+          </div>
+        </div>
+
         {/* Deliverables & Handover Section (Sellers Submits Work here, Buyer Reviews & Releases Escrow) */}
         <div className="rounded-xl border border-emerald-500/30 bg-surface p-6 space-y-6">
           <div className="flex items-center justify-between border-b border-border pb-4">

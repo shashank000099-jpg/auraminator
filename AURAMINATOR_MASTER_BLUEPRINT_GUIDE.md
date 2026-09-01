@@ -1,20 +1,27 @@
-# AURAMINATOR.IN • COMPLETE MASTER ARCHITECTURE & OPERATING BLUEPRINT
-**The Multi-Sided Commerce, Digital Asset Brokerage, Escrow Deal & Career Engine**
-
----
-
 ## 1. EXECUTIVE SUMMARY & WHAT IS AURAMINATOR?
 
-**AURAMINATOR (auraminator.in)** is an elite, multi-sided marketplace and protected escrow deal platform built for the modern creator, developer, and startup economy. 
+**AURAMINATOR (auraminator.in)** is an elite, multi-sided marketplace, protected escrow deal, and career platform built for the modern creator, developer, and startup economy. 
 
-It combines **7 distinct commercial engines** into a single unified platform:
+It combines **7 distinct commercial engines** with a zero-leakage **Anti-Circumvention & Escrow Protection Protocol**:
 1. **Turnkey SaaS Platforms & Revenue Websites**: Buying and selling revenue-generating web apps with verified Stripe MRR/ARR, domain EPP auth codes, and database transfers.
 2. **Mobile Apps (iOS & Android)**: Buying and selling published apps with verified store downloads, in-app purchases, and Apple App Store / Google Play Console zero-downtime transfers.
 3. **Full Source Code & IP Repositories**: Commercial source code and 100% exclusive copyright assignment with private GitHub organization handovers.
 4. **Social Media Accounts & Digital Real Estate**: Monetized YouTube channels, high-engagement Instagram pages, X/Twitter handles with verified follower metrics and original registration email (OGE) handovers.
 5. **Physical Luxury Streetwear & Apparel**: Architectural cut-and-sew heavyweight drops (500 GSM French Terry) with automated Shiprocket logistics (Delhivery/BlueDart).
-6. **Online Tech Services & No-Contact Sprints**: Emergency 24h debugging, Next.js architecture sprints, and smart contract audits with GitHub Pull Request delivery.
+6. **Online Tech Services & No-Contact Sprints**: Emergency 24h debugging, Next.js architecture sprints, and smart contract audits with post-payment direct WhatsApp/Call unlock and GitHub Pull Request delivery.
 7. **100% Free Creator & Tech Job Board**: Startups post jobs for free, talent applies with 1-click rich dossiers (Resumes, GitHub, Portfolios), and hiring teams manage candidate pipelines.
+
+---
+
+### Anti-Circumvention & Service Contact Lifecycle Rule:
+- **BEFORE ESCROW PAYMENT**:
+  * Buyer and Seller can chat freely in the Auraminator Deal Room to discuss price, make offers, counter-offers, discounts, and tech deliverables.
+  * **Strict Multi-Layer Contact Filter Active**: Phone numbers (direct, spaced, hyphenated, emoji-separated, or Hindi/English spelled out like *"nine eight seven..."* or *"nau aath saat..."*), WhatsApp links, emails, disguised MRPs, and UPI IDs are **completely blocked and filtered in real-time**.
+- **AFTER ESCROW PAYMENT (FOR SERVICES)**:
+  * Once the buyer deposits escrow funds, **the Buyer's Verified Contact Dossier (WhatsApp, Direct Call, Email) is unlocked exclusively for the Seller**.
+  * The Seller (Developer / Service Provider) contacts the Buyer directly via WhatsApp, Phone, or Email to coordinate requirements and execute the sprint.
+  * The Buyer sees an active confirmation banner that the assigned verified developer has received their dossier and will reach out within the SLA window.
+  * Once the developer submits the verified GitHub PR / deliverable link and the buyer approves, **85% payout is released to the seller** and **15% platform commission** is retained.
 
 ---
 

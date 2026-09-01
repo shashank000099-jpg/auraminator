@@ -32,6 +32,7 @@ import { formatINR } from "@/lib/utils";
 import { useAuth } from "@/lib/context/auth-context";
 import { MOCK_DEAL_ROOMS } from "@/lib/mock-data";
 import { DealRoom, DealTransfer, DealMessage, TransferType } from "@/lib/types";
+import { detectContactInformation } from "@/lib/anti-circumvention";
 
 export default function ProtectedDealRoomPage() {
   const params = useParams();
@@ -42,6 +43,7 @@ export default function ProtectedDealRoomPage() {
   const [deal, setDeal] = useState<DealRoom | null>(null);
   const [activeRole, setActiveRole] = useState<"buyer" | "seller">("buyer");
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
+  const [contactViolationWarning, setContactViolationWarning] = useState<string | null>(null);
 
   // Interaction States
   const [counterAmount, setCounterAmount] = useState("");
@@ -98,6 +100,16 @@ export default function ProtectedDealRoomPage() {
     e.preventDefault();
     if (!counterAmount || parseFloat(counterAmount) <= 0) return;
 
+    // Pre-payment contact filtering
+    if (deal.escrow_status === "awaiting_deposit" && counterNote) {
+      const check = detectContactInformation(counterNote);
+      if (check.isBlocked) {
+        setContactViolationWarning(check.reason || "Sharing phone numbers, WhatsApp, emails, or direct contact is prohibited before payment.");
+        return;
+      }
+    }
+    setContactViolationWarning(null);
+
     setIsActionLoading(true);
     try {
       const res = await fetch(`/api/deals/${dealId}`, {
@@ -114,9 +126,14 @@ export default function ProtectedDealRoomPage() {
         }),
       });
       const data = await res.json();
+      if (data.isBlocked) {
+        setContactViolationWarning(data.error);
+        return;
+      }
       if (data.deal) {
         setDeal(data.deal);
         setIsCountering(false);
+        setCounterNote("");
       }
     } catch {
       alert("Counter-offer submitted.");
@@ -267,6 +284,16 @@ export default function ProtectedDealRoomPage() {
     e.preventDefault();
     if (!chatInput.trim()) return;
 
+    // Pre-payment contact filtering
+    if (deal.escrow_status === "awaiting_deposit") {
+      const check = detectContactInformation(chatInput);
+      if (check.isBlocked) {
+        setContactViolationWarning(check.reason || "Sharing phone numbers, WhatsApp, emails, or social IDs is prohibited before payment.");
+        return;
+      }
+    }
+    setContactViolationWarning(null);
+
     setIsSendingChat(true);
     try {
       const res = await fetch(`/api/deals/${dealId}`, {
@@ -282,6 +309,10 @@ export default function ProtectedDealRoomPage() {
         }),
       });
       const data = await res.json();
+      if (data.isBlocked) {
+        setContactViolationWarning(data.error);
+        return;
+      }
       if (data.deal) {
         setDeal(data.deal);
         setChatInput("");
@@ -464,6 +495,98 @@ export default function ProtectedDealRoomPage() {
                   <div className="rounded-lg border border-white/10 bg-black/40 p-3 text-xs text-zinc-400 text-center">
                     Awaiting buyer escrow deposit. You will be notified once funds are safely locked.
                   </div>
+                )}
+              </div>
+            )}
+
+            {/* UNLOCKED CONTACT DOSSIER FOR SERVICES (POST-ESCROW DEPOSIT) */}
+            {deal.product?.product_type === "service" && deal.escrow_status !== "awaiting_deposit" && (
+              <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-6 space-y-4 brutalist-card">
+                <div className="flex items-center justify-between border-b border-emerald-500/20 pb-3">
+                  <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase">
+                    <ShieldCheck className="h-4 w-4" />
+                    <span>
+                      {activeRole === "seller"
+                        ? "CLIENT CONTACT DOSSIER UNLOCKED (REACH OUT TO BUYER)"
+                        : "ESCROW LOCKED • DEVELOPER DISPATCH IN PROGRESS"}
+                    </span>
+                  </div>
+                  <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-mono font-bold">
+                    POST-PAYMENT ACTIVE
+                  </span>
+                </div>
+
+                {activeRole === "seller" ? (
+                  <>
+                    <p className="text-xs text-zinc-300 font-sans leading-relaxed">
+                      Escrow of <strong className="text-white">{formatINR(deal.agreed_price)}</strong> is safely locked. As the service provider, you can now contact the buyer directly via WhatsApp/Call/Email to initiate the sprint and clarify technical requirements.
+                    </p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
+                      <div className="rounded-lg border border-white/10 bg-black/50 p-3 space-y-1">
+                        <span className="text-zinc-500 text-[10px] uppercase font-bold block">Client Verified WhatsApp / Phone:</span>
+                        <a
+                          href="https://wa.me/919876512345"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1.5"
+                        >
+                          <span>+91 98765 12345 (Alex Mercer)</span>
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
+
+                      <div className="rounded-lg border border-white/10 bg-black/50 p-3 space-y-1">
+                        <span className="text-zinc-500 text-[10px] uppercase font-bold block">Client Official Email:</span>
+                        <a
+                          href="mailto:alex.mercer@gmail.com"
+                          className="text-white hover:text-emerald-400 font-bold break-all"
+                        >
+                          alex.mercer@gmail.com
+                        </a>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono">
+                      <span className="text-[11px] text-zinc-400">
+                        Submit PR deliverables in Seller Studio to claim 85% payout
+                      </span>
+                      <Link href="/seller/services">
+                        <Button variant="outline" size="sm" className="flex items-center gap-1.5 border-emerald-500/30 text-emerald-400">
+                          <span>OPEN SELLER SERVICE QUEUE</span>
+                          <ArrowRight className="h-3.5 w-3.5" />
+                        </Button>
+                      </Link>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xs text-zinc-300 font-sans leading-relaxed">
+                      Your escrow payment of <strong className="text-white">{formatINR(deal.agreed_price)}</strong> is safely locked. Your verified contact details and project requirements have been securely delivered to <strong className="text-white">@{deal.seller?.username || "syntaxlabs"}</strong>.
+                    </p>
+
+                    <div className="rounded-lg border border-white/10 bg-black/50 p-4 space-y-2 text-xs font-mono">
+                      <div className="flex items-center gap-2 text-emerald-400 font-bold">
+                        <Clock className="h-4 w-4 animate-spin" />
+                        <span>DEVELOPER HAS RECEIVED YOUR ORDER &amp; WILL CONTACT YOU DIRECTLY</span>
+                      </div>
+                      <p className="text-[11px] text-zinc-400 font-sans">
+                        The developer will reach out to you directly via WhatsApp, Phone, or Email within the SLA window to coordinate the code fix / deliverable.
+                      </p>
+                    </div>
+
+                    <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono">
+                      <span className="text-[11px] text-zinc-400">
+                        Track Pull Request and release escrow when ready
+                      </span>
+                      <Link href="/account/services/SRV-94012">
+                        <Button variant="outline" size="sm" className="flex items-center gap-1.5 border-emerald-500/30 text-emerald-400">
+                          <span>VIEW SERVICE WORKSPACE</span>
+                          <ArrowRight className="h-3.5 w-3.5" />
+                        </Button>
+                      </Link>
+                    </div>
+                  </>
                 )}
               </div>
             )}
@@ -759,6 +882,30 @@ export default function ProtectedDealRoomPage() {
                   <p className="text-xs text-zinc-500">No messages yet.</p>
                 )}
               </div>
+
+              {/* Pre-Payment Anti-Circumvention Warning Banner */}
+              {deal.escrow_status === "awaiting_deposit" && (
+                <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-2.5 space-y-1 text-[11px] font-mono text-amber-300">
+                  <div className="flex items-center gap-1.5 font-bold text-amber-400">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    <span>PRE-PAYMENT ESCROW PROTECTION ACTIVE</span>
+                  </div>
+                  <p className="text-[10px] text-zinc-400 font-sans leading-tight">
+                    Discuss price, discounts, and technical scope freely. Sharing phone numbers, emails, WhatsApp, or off-platform payment links is blocked until escrow deposit.
+                  </p>
+                </div>
+              )}
+
+              {/* Real-time Blocked Contact Alert */}
+              {contactViolationWarning && (
+                <div className="rounded-lg border border-red-500/50 bg-red-500/15 p-3 space-y-1 text-xs font-mono text-red-300 animate-in fade-in">
+                  <div className="flex items-center gap-1.5 font-bold text-red-400">
+                    <AlertTriangle className="h-4 w-4" />
+                    <span>OFF-PLATFORM CONTACT SHARING BLOCKED</span>
+                  </div>
+                  <p className="text-[11px] text-zinc-300 font-sans">{contactViolationWarning}</p>
+                </div>
+              )}
 
               {/* In-Deal Chat Input */}
               <form onSubmit={handleSendChat} className="flex gap-2 pt-2 border-t border-border">

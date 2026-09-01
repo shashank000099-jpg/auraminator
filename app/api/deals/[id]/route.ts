@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { MOCK_DEAL_ROOMS, MOCK_PRODUCTS } from "@/lib/mock-data";
+import { detectContactInformation } from "@/lib/anti-circumvention";
 
 export async function GET(
   request: Request,
@@ -53,6 +54,21 @@ export async function PATCH(
 
     switch (action) {
       case "counter_offer": {
+        // Pre-payment contact filtering on counter note
+        if (deal.escrow_status === "awaiting_deposit" && payload.note) {
+          const check = detectContactInformation(payload.note);
+          if (check.isBlocked) {
+            return NextResponse.json(
+              {
+                error: check.reason || "Sharing phone numbers, emails, WhatsApp, or direct contact is prohibited before payment.",
+                isBlocked: true,
+                detectedType: check.detectedType,
+              },
+              { status: 400 }
+            );
+          }
+        }
+
         const newAmount = parseFloat(payload.amount);
         const counterMessage = {
           id: `msg-${Date.now()}`,
@@ -197,6 +213,22 @@ export async function PATCH(
       }
 
       case "send_message": {
+        // Pre-payment contact filtering on chat message
+        const isPrePayment = deal.escrow_status === "awaiting_deposit";
+        if (isPrePayment) {
+          const check = detectContactInformation(payload.message);
+          if (check.isBlocked) {
+            return NextResponse.json(
+              {
+                error: check.reason || "Sharing contact details (phone, WhatsApp, email, social IDs) is prohibited before escrow payment.",
+                isBlocked: true,
+                detectedType: check.detectedType,
+              },
+              { status: 400 }
+            );
+          }
+        }
+
         const chatMessage = {
           id: `msg-${Date.now()}`,
           deal_id: dealId,

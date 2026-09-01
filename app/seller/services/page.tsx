@@ -176,6 +176,48 @@ export default function SellerServicesManagerPage() {
                 </div>
               </div>
 
+              {/* UNLOCKED CLIENT CONTACT DOSSIER (FOR SELLER TO REACH OUT) */}
+              <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-4 space-y-3">
+                <div className="flex items-center justify-between border-b border-emerald-500/20 pb-2">
+                  <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase">
+                    <ShieldCheck className="h-4 w-4" />
+                    <span>CLIENT CONTACT DOSSIER (UNLOCKED)</span>
+                  </div>
+                  <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-mono font-bold">
+                    ESCROW DEPOSIT VERIFIED
+                  </span>
+                </div>
+
+                <p className="text-xs text-zinc-300 font-sans">
+                  The client has deposited <strong className="text-white">{formatINR(currentService.gross_amount)}</strong> into Escrow. Reach out to them directly to coordinate the sprint:
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
+                  <div className="rounded-lg border border-white/10 bg-black/50 p-3 space-y-1">
+                    <span className="text-zinc-500 text-[10px] uppercase font-bold block">Client WhatsApp / Phone:</span>
+                    <a
+                      href="https://wa.me/919876512345"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1.5"
+                    >
+                      <span>+91 98765 12345 ({currentService.client_name})</span>
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+
+                  <div className="rounded-lg border border-white/10 bg-black/50 p-3 space-y-1">
+                    <span className="text-zinc-500 text-[10px] uppercase font-bold block">Client Email:</span>
+                    <a
+                      href="mailto:alex.mercer@gmail.com"
+                      className="text-white hover:text-emerald-400 font-bold break-all"
+                    >
+                      alex.mercer@gmail.com
+                    </a>
+                  </div>
+                </div>
+              </div>
+
               {/* Client Requirements Box */}
               <div className="rounded-lg border border-border bg-black p-4 space-y-2 text-xs">
                 <div className="flex items-center justify-between">
