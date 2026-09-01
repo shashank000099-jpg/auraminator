@@ -82,10 +82,15 @@ export default function SellerDashboardPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <Link href="/seller/services">
+            <Link href="/account/deals">
               <Button variant="outline" size="md" className="flex items-center gap-1.5 border-emerald-500/30 text-emerald-400">
                 <ShieldCheck className="h-3.5 w-3.5" />
-                <span>TECH SERVICE ORDERS</span>
+                <span>DEALS &amp; OFFERS</span>
+              </Button>
+            </Link>
+            <Link href="/seller/services">
+              <Button variant="outline" size="md" className="flex items-center gap-1.5 border-white/20 text-zinc-300">
+                <span>TECH SERVICES</span>
               </Button>
             </Link>
             <Button

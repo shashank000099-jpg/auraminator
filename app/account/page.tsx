@@ -55,6 +55,11 @@ export default function BuyerAccountPage() {
                 </Button>
               </Link>
             )}
+            <Link href="/account/deals">
+              <button className="px-4 py-2 rounded-lg transition border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 font-bold hover:bg-emerald-500/20">
+                Protected Deals (1)
+              </button>
+            </Link>
             <button
               onClick={() => setActiveTab("orders")}
               className={`px-4 py-2 rounded-lg transition ${

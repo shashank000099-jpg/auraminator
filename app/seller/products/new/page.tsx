@@ -7,51 +7,72 @@ import {
   ArrowLeft,
   Sparkles,
   Upload,
-  ShieldCheck,
-  CheckCircle2,
   Lock,
+  Download,
   Link2,
   Box,
-  Download,
   Code2,
-  Truck,
-  Clock,
-  DollarSign,
+  ShieldCheck,
+  CheckCircle2,
+  AlertCircle,
+  Layers,
+  Handshake,
+  Smartphone,
+  Globe,
+  Youtube,
+  Instagram,
+  Twitter,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AICopilotModal } from "@/components/ai-copilot-modal";
 import { formatINR } from "@/lib/utils";
+import { ProductType } from "@/lib/types";
 
 export default function NewProductDropPage() {
   const router = useRouter();
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
 
   // Product Fields
-  const [title, setTitle] = useState("Emergency Full-Stack Debug & Bug Fix Sprint (24h SLA)");
-  const [productType, setProductType] = useState<"physical" | "digital_file" | "digital_link" | "service">("service");
-  const [basePrice, setBasePrice] = useState("4999");
+  const [title, setTitle] = useState("VividAI • Automated Short-Form Video Generator SaaS");
+  const [productType, setProductType] = useState<ProductType>("saas");
+  const [basePrice, setBasePrice] = useState("450000");
   const [description, setDescription] = useState(
-    "Instant emergency debugging for production web apps. We identify memory leaks, fix broken Next.js / React / Node.js API routes, resolve SSR hydration mismatches, and submit clean GitHub PRs within 24 hours."
+    "Turnkey B2B SaaS platform generating ₹48.5k verified MRR with 82% profit margins. Complete turnkey handover including domain, Stripe customers, and Next.js / FastAPI codebase."
   );
   const [thumbnailUrl, setThumbnailUrl] = useState(
-    "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1200&q=80"
+    "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80"
   );
   const [videoPreviewUrl, setVideoPreviewUrl] = useState("");
   const [galleryUrls, setGalleryUrls] = useState("");
 
+  // SaaS & Web Asset Specific Fields
+  const [assetMrr, setAssetMrr] = useState("48500");
+  const [assetArr, setAssetArr] = useState("582000");
+  const [assetNetProfit, setAssetNetProfit] = useState("39000");
+  const [assetDomain, setAssetDomain] = useState("vividai.tools");
+  const [assetMonthlyVisitors, setAssetMonthlyVisitors] = useState("34200");
+  const [assetTechStack, setAssetTechStack] = useState("Next.js 14, FastAPI, Replicate AI, Stripe, Supabase");
+
+  // Mobile App Specific Fields
+  const [appPlatform, setAppPlatform] = useState<"both" | "ios" | "android">("both");
+  const [appDownloads, setAppDownloads] = useState("65000");
+
+  // Source Code Specific Fields
+  const [repoUrl, setRepoUrl] = useState("github.com/syntaxlabs/vividai");
+  const [licenseType, setLicenseType] = useState<"exclusive_ip" | "commercial_source">("exclusive_ip");
+
+  // Social Account Specific Fields
+  const [socialPlatform, setSocialPlatform] = useState<"youtube" | "instagram" | "twitter_x" | "tiktok">("youtube");
+  const [socialHandle, setSocialHandle] = useState("@CodeVortexAI");
+  const [socialFollowers, setSocialFollowers] = useState("142000");
+  const [socialMonetized, setSocialMonetized] = useState(true);
+
   // Service Specific Fields
   const [serviceSlaDays, setServiceSlaDays] = useState("1");
-  const [techStackTags, setTechStackTags] = useState("Next.js, Supabase, Node.js, Cloudflare");
 
   // Physical Specific Fields
   const [fabricGsm, setFabricGsm] = useState("500 GSM French Terry");
   const [itemWeightGrams, setItemWeightGrams] = useState("850");
-
-  // SSRF URL Ingestion State
-  const [importUrl, setImportUrl] = useState("");
-  const [isImporting, setIsImporting] = useState(false);
-  const [importedAssetKey, setImportedAssetKey] = useState<string | null>(null);
 
   // Submitting
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -59,27 +80,6 @@ export default function NewProductDropPage() {
   const priceNum = parseFloat(basePrice) || 0;
   const platformFee = priceNum * 0.15; // 15% platform fee
   const sellerNetPayout = priceNum * 0.85; // 85% creator payout
-
-  const handleSsrfImport = async () => {
-    if (!importUrl) return;
-    setIsImporting(true);
-    try {
-      const res = await fetch("/api/seller/import-by-url", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fileUrl: importUrl }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "SSRF import failed");
-
-      setImportedAssetKey(data.assetKey);
-      alert(`Asset ingested safely into Cloudflare R2 Vault: ${data.assetKey}`);
-    } catch (err: any) {
-      alert(`Ingestion error: ${err.message}`);
-    } finally {
-      setIsImporting(false);
-    }
-  };
 
   const handleSubmitDrop = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,6 +94,27 @@ export default function NewProductDropPage() {
         platform_fee_percent: 15.0,
         thumbnail_url: thumbnailUrl,
         media_gallery: [thumbnailUrl, ...galleryUrls.split(",").map((u) => u.trim()).filter(Boolean)],
+        asset_metrics: {
+          mrr: assetMrr ? parseFloat(assetMrr) : undefined,
+          arr: assetArr ? parseFloat(assetArr) : undefined,
+          net_profit_monthly: assetNetProfit ? parseFloat(assetNetProfit) : undefined,
+          domain_name: assetDomain || undefined,
+          monthly_visitors: assetMonthlyVisitors ? parseInt(assetMonthlyVisitors) : undefined,
+          tech_stack: assetTechStack ? assetTechStack.split(",").map((t) => t.trim()).filter(Boolean) : undefined,
+          platform: productType === "app" ? appPlatform : productType === "social_account" ? socialPlatform : undefined,
+          downloads_count: appDownloads ? parseInt(appDownloads) : undefined,
+          followers_count: socialFollowers ? parseInt(socialFollowers) : undefined,
+          handle: socialHandle || undefined,
+          is_monetized: socialMonetized,
+          github_repo_url: repoUrl || undefined,
+          license_type: licenseType,
+          transfer_items: [
+            "Primary Domain / Account Ownership Handover",
+            "Full GitHub Organization & Source Code Access",
+            "Revenue & Customer Database Integration Transfer",
+            "30 Days Seller Transition Support"
+          ]
+        },
         variants:
           productType === "physical"
             ? [
@@ -102,23 +123,6 @@ export default function NewProductDropPage() {
                 { sku: `SKU-${Date.now()}-XL`, title: "Pitch Black / XL", price: priceNum, inventory_count: 10 },
               ]
             : [],
-        digital_asset:
-          productType === "digital_file"
-            ? {
-                r2_asset_key: importedAssetKey || `sellers/kaizen/drop-asset-${Date.now()}.zip`,
-                file_name: "drop-artifact-vault.zip",
-                file_size_bytes: 48920110,
-                mime_type: "application/zip",
-              }
-            : null,
-        vault_link:
-          productType === "digital_link"
-            ? {
-                provider: "notion",
-                destination_url: "https://notion.so/auraminator-workspace-link",
-                access_instructions: "Authenticate and duplicate to your personal Notion.",
-              }
-            : null,
       };
 
       const res = await fetch("/api/seller/products", {
@@ -148,33 +152,31 @@ export default function NewProductDropPage() {
               <span>Back to Studio</span>
             </Link>
             <h1 className="text-2xl font-extrabold uppercase tracking-tight text-white mt-2">
-              PUBLISH NEW PRODUCT / TECH SERVICE
+              LIST NEW ASSET / PRODUCT / SAAS
             </h1>
           </div>
 
-          <Button
-            type="button"
-            variant="outline"
-            size="md"
-            onClick={() => setIsCopilotOpen(true)}
-            className="flex items-center gap-1.5"
-          >
-            <Sparkles className="h-3.5 w-3.5 text-white" />
-            <span>AI DROP ARCHITECT</span>
-          </Button>
+          <div className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-400">
+            <ShieldCheck className="h-4 w-4" />
+            <span>PROTECTED ESCROW BROKERAGE</span>
+          </div>
         </div>
 
-        {/* Drop Form */}
-        <form onSubmit={handleSubmitDrop} className="rounded-xl border border-border bg-surface p-6 space-y-6">
-          {/* Classification Selection */}
+        {/* Drop Builder Form */}
+        <form onSubmit={handleSubmitDrop} className="space-y-6">
+          {/* Classification Selector */}
           <div className="space-y-2">
-            <label className="block text-xs uppercase text-zinc-400 font-bold">1. Select Drop Classification</label>
+            <label className="block text-xs uppercase text-zinc-400 font-bold">1. Select Asset Classification</label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
               {[
-                { id: "service", label: "Online Tech Service (Code/Debug)", icon: Code2 },
-                { id: "physical", label: "Streetwear / Cut-and-Sew Apparel", icon: Box },
-                { id: "digital_file", label: "R2 Digital Asset Vault (ZIP/3D)", icon: Download },
-                { id: "digital_link", label: "Protected Notion / Figma Link", icon: Link2 },
+                { id: "saas", label: "Turnkey SaaS / Website", icon: Sparkles },
+                { id: "app", label: "Mobile App (iOS/Android)", icon: Smartphone },
+                { id: "source_code", label: "Full Source Code IP", icon: Code2 },
+                { id: "social_account", label: "Social Media Account", icon: Globe },
+                { id: "service", label: "Tech Service (Debug/Dev)", icon: Layers },
+                { id: "physical", label: "Cut-and-Sew Streetwear", icon: Box },
+                { id: "digital_file", label: "Digital Vault (ZIP/3D)", icon: Download },
+                { id: "digital_link", label: "Notion / Workspace Link", icon: Link2 },
               ].map((t) => {
                 const Icon = t.icon;
                 return (
@@ -204,7 +206,7 @@ export default function NewProductDropPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="sm:col-span-2">
                 <Input
-                  label="Title (Service or Product Name)"
+                  label="Title (Asset or Product Name)"
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
@@ -212,7 +214,7 @@ export default function NewProductDropPage() {
               </div>
               <div>
                 <Input
-                  label="List Price (INR ₹)"
+                  label="List / Buy Now Price (INR ₹)"
                   required
                   value={basePrice}
                   onChange={(e) => setBasePrice(e.target.value)}
@@ -223,14 +225,14 @@ export default function NewProductDropPage() {
             {/* Real-time Commission Breakdown Card */}
             <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs font-mono">
               <div>
-                <span className="text-emerald-400 font-bold block">✓ Net Creator Escrow Payout (85%)</span>
+                <span className="text-emerald-400 font-bold block">✓ Net Seller Escrow Payout (85%)</span>
                 <span className="text-xl font-bold text-white mt-0.5 block">{formatINR(sellerNetPayout)}</span>
-                <span className="text-[10px] text-zinc-500">Credited automatically upon verified completion</span>
+                <span className="text-[10px] text-zinc-500">Dispatched automatically upon buyer handover inspection</span>
               </div>
               <div className="text-left sm:text-right border-t sm:border-t-0 border-white/10 pt-2 sm:pt-0">
-                <span className="text-zinc-500 block text-[10px]">Platform Fee (15%)</span>
+                <span className="text-zinc-500 block text-[10px]">Platform Escrow Fee (15%)</span>
                 <span className="text-zinc-300 font-bold">{formatINR(platformFee)}</span>
-                <span className="text-[10px] text-zinc-500 block">Includes Razorpay + Escrow infrastructure</span>
+                <span className="text-[10px] text-zinc-500 block">Includes Razorpay + Protected Deal Room</span>
               </div>
             </div>
 
@@ -270,62 +272,173 @@ export default function NewProductDropPage() {
             />
           </div>
 
-          {/* Conditional Sub-settings for Service vs Physical */}
-          {productType === "service" && (
+          {/* Conditional Sub-settings for SaaS */}
+          {productType === "saas" && (
             <div className="space-y-4 pt-4 border-t border-border">
-              <div className="flex items-center gap-2 text-white font-bold text-xs">
+              <div className="flex items-center gap-2 text-white font-bold text-xs uppercase">
+                <Sparkles className="h-4 w-4 text-emerald-400" />
+                <span>SaaS Revenue &amp; Architecture Metrics</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Input
+                  label="Monthly Recurring Revenue (MRR ₹)"
+                  value={assetMrr}
+                  onChange={(e) => setAssetMrr(e.target.value)}
+                  placeholder="e.g. 48500"
+                />
+                <Input
+                  label="Monthly Net Profit (₹)"
+                  value={assetNetProfit}
+                  onChange={(e) => setAssetNetProfit(e.target.value)}
+                  placeholder="e.g. 39000"
+                />
+                <Input
+                  label="Primary Domain Name"
+                  value={assetDomain}
+                  onChange={(e) => setAssetDomain(e.target.value)}
+                  placeholder="e.g. vividai.tools"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Input
+                  label="Monthly Website Visitors"
+                  value={assetMonthlyVisitors}
+                  onChange={(e) => setAssetMonthlyVisitors(e.target.value)}
+                  placeholder="e.g. 34000"
+                />
+                <Input
+                  label="Tech Stack (Comma separated)"
+                  value={assetTechStack}
+                  onChange={(e) => setAssetTechStack(e.target.value)}
+                  placeholder="Next.js 14, FastAPI, Stripe, Supabase"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Conditional Sub-settings for Mobile Apps */}
+          {productType === "app" && (
+            <div className="space-y-4 pt-4 border-t border-border">
+              <div className="flex items-center gap-2 text-white font-bold text-xs uppercase">
+                <Smartphone className="h-4 w-4 text-emerald-400" />
+                <span>Mobile App Platform &amp; Store Metrics</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="block text-xs uppercase text-zinc-400 font-bold">App Store Platform</label>
+                  <select
+                    value={appPlatform}
+                    onChange={(e) => setAppPlatform(e.target.value as any)}
+                    className="h-10 w-full rounded-lg border border-border bg-surface-elevated px-3 text-xs font-mono text-white focus:border-white focus:outline-none"
+                  >
+                    <option value="both">Both iOS (App Store) &amp; Android (Google Play)</option>
+                    <option value="ios">iOS App Store Only</option>
+                    <option value="android">Google Play Store Only</option>
+                  </select>
+                </div>
+                <Input
+                  label="Total Verified Downloads"
+                  value={appDownloads}
+                  onChange={(e) => setAppDownloads(e.target.value)}
+                  placeholder="e.g. 65000"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Conditional Sub-settings for Source Code */}
+          {productType === "source_code" && (
+            <div className="space-y-4 pt-4 border-t border-border">
+              <div className="flex items-center gap-2 text-white font-bold text-xs uppercase">
                 <Code2 className="h-4 w-4 text-emerald-400" />
-                <span>Tech Service SLA &amp; Intake Configuration</span>
+                <span>Source Code Repository &amp; IP Assignment</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input
-                  label="Delivery SLA (Turnaround in Days)"
-                  value={serviceSlaDays}
-                  onChange={(e) => setServiceSlaDays(e.target.value)}
-                  helperText="Client gets a countdown timer. 72h auto-clearance upon deliverable submission."
+                  label="GitHub / GitLab Repository URL"
+                  value={repoUrl}
+                  onChange={(e) => setRepoUrl(e.target.value)}
+                  placeholder="github.com/organization/repo-name"
                 />
-                <Input
-                  label="Supported Tech Stack (Comma separated)"
-                  value={techStackTags}
-                  onChange={(e) => setTechStackTags(e.target.value)}
-                  placeholder="e.g. Next.js, Node.js, Supabase, Solidity, AWS"
-                />
+                <div className="space-y-1.5">
+                  <label className="block text-xs uppercase text-zinc-400 font-bold">License / IP Transfer Type</label>
+                  <select
+                    value={licenseType}
+                    onChange={(e) => setLicenseType(e.target.value as any)}
+                    className="h-10 w-full rounded-lg border border-border bg-surface-elevated px-3 text-xs font-mono text-white focus:border-white focus:outline-none"
+                  >
+                    <option value="exclusive_ip">100% Exclusive IP &amp; Copyright Assignment</option>
+                    <option value="commercial_source">Non-Exclusive Commercial Source License</option>
+                  </select>
+                </div>
               </div>
             </div>
           )}
 
-          {productType === "physical" && (
+          {/* Conditional Sub-settings for Social Accounts */}
+          {productType === "social_account" && (
             <div className="space-y-4 pt-4 border-t border-border">
-              <div className="flex items-center gap-2 text-white font-bold text-xs">
-                <Box className="h-4 w-4 text-emerald-400" />
-                <span>Physical Apparel &amp; Shiprocket Logistics Specs</span>
+              <div className="flex items-center gap-2 text-white font-bold text-xs uppercase">
+                <Globe className="h-4 w-4 text-emerald-400" />
+                <span>Social Media Account Reach &amp; Handover</span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <label className="block text-xs uppercase text-zinc-400 font-bold">Social Platform</label>
+                  <select
+                    value={socialPlatform}
+                    onChange={(e) => setSocialPlatform(e.target.value as any)}
+                    className="h-10 w-full rounded-lg border border-border bg-surface-elevated px-3 text-xs font-mono text-white focus:border-white focus:outline-none"
+                  >
+                    <option value="youtube">YouTube Channel</option>
+                    <option value="instagram">Instagram Account</option>
+                    <option value="twitter_x">X / Twitter Handle</option>
+                    <option value="tiktok">TikTok Profile</option>
+                  </select>
+                </div>
+
                 <Input
-                  label="Fabric & Density Specs"
-                  value={fabricGsm}
-                  onChange={(e) => setFabricGsm(e.target.value)}
-                  placeholder="e.g. 500 GSM Loopback French Terry"
+                  label="Handle / Channel Name"
+                  value={socialHandle}
+                  onChange={(e) => setSocialHandle(e.target.value)}
+                  placeholder="e.g. @CodeVortexAI"
                 />
+
                 <Input
-                  label="Package Weight in Grams"
-                  value={itemWeightGrams}
-                  onChange={(e) => setItemWeightGrams(e.target.value)}
-                  helperText="Used for automated 1-click Shiprocket courier rate computation."
+                  label="Followers / Subscribers Count"
+                  value={socialFollowers}
+                  onChange={(e) => setSocialFollowers(e.target.value)}
+                  placeholder="e.g. 142000"
                 />
               </div>
             </div>
           )}
 
-          <Button type="submit" variant="primary" size="lg" isLoading={isSubmitting} className="w-full">
-            PUBLISH DROP WITH ESCROW PROTECTION (15% FEE)
-          </Button>
+          {/* Submit */}
+          <div className="pt-6 border-t border-border flex justify-end gap-3">
+            <Link href="/seller/dashboard">
+              <Button type="button" variant="outline" size="md">
+                Cancel
+              </Button>
+            </Link>
+            <Button
+              type="submit"
+              variant="primary"
+              size="md"
+              isLoading={isSubmitting}
+              className="flex items-center gap-2 bg-white text-black hover:bg-zinc-200"
+            >
+              <span>PUBLISH LISTING &amp; ENABLE ESCROW DEALS</span>
+              <ArrowLeft className="h-4 w-4 rotate-180" />
+            </Button>
+          </div>
         </form>
       </div>
-
-      <AICopilotModal isOpen={isCopilotOpen} onClose={() => setIsCopilotOpen(false)} />
     </div>
   );
 }

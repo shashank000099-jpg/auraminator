@@ -1,6 +1,6 @@
 export type UserRole = 'buyer' | 'seller' | 'admin';
 export type VerificationStatus = 'draft' | 'pending' | 'under_review' | 'verified' | 'rejected' | 'suspended';
-export type ProductType = 'digital_file' | 'digital_link' | 'physical' | 'service';
+export type ProductType = 'digital_file' | 'digital_link' | 'physical' | 'service' | 'app' | 'website' | 'saas' | 'source_code' | 'social_account';
 export type ProductStatus = 'draft' | 'pending_review' | 'published' | 'flagged' | 'suspended';
 export type VariantStatus = 'active' | 'inactive' | 'out_of_stock';
 export type PaymentStatus = 'pending' | 'captured' | 'failed' | 'refunded' | 'partially_refunded';
@@ -118,6 +118,25 @@ export interface ExternalVaultLink {
   created_at: string;
 }
 
+export interface AssetMetrics {
+  mrr?: number;
+  arr?: number;
+  net_profit_monthly?: number;
+  tech_stack?: string[];
+  platform?: 'ios' | 'android' | 'both' | 'web' | 'youtube' | 'instagram' | 'twitter_x' | 'tiktok' | string;
+  downloads_count?: number;
+  monthly_visitors?: number;
+  followers_count?: number;
+  handle?: string;
+  domain_name?: string;
+  is_monetized?: boolean;
+  engagement_rate?: string;
+  github_repo_url?: string;
+  license_type?: 'exclusive_ip' | 'commercial_source' | 'standard';
+  proof_links?: string[];
+  transfer_items?: string[];
+}
+
 export interface Product {
   id: string;
   seller_id: string;
@@ -130,6 +149,7 @@ export interface Product {
   platform_fee_percent: number;
   thumbnail_url: string;
   media_gallery: string[];
+  asset_metrics?: AssetMetrics;
   status: ProductStatus;
   created_at: string;
   updated_at: string;
@@ -374,5 +394,79 @@ export interface JobApplication {
   updated_at: string;
   job?: JobPosting;
 }
+
+// ==========================================
+// 14. DIGITAL ASSETS & PROTECTED DEALS ENGINE
+// ==========================================
+export type OfferStatus = 'pending' | 'countered' | 'accepted' | 'rejected' | 'expired' | 'deal_initiated';
+export type DealStatus = 'awaiting_deposit' | 'escrow_locked' | 'credentials_transferred' | 'buyer_inspecting' | 'completed_paid' | 'disputed';
+export type TransferType = 'domain_auth_code' | 'github_repo_transfer' | 'cloud_hosting_access' | 'social_login_credentials' | 'apk_ipa_source' | 'custom_transfer';
+export type DealMessageType = 'chat' | 'counter_offer' | 'payment_deposit' | 'credentials_submitted' | 'escrow_released' | 'dispute_opened';
+
+export interface Offer {
+  id: string;
+  product_id: string;
+  buyer_id: string;
+  seller_id: string;
+  initial_offer_amount: number;
+  current_offer_amount: number;
+  last_offered_by: 'buyer' | 'seller';
+  status: OfferStatus;
+  terms_note?: string;
+  created_at: string;
+  updated_at: string;
+  product?: Product;
+  buyer?: Profile;
+  seller?: Profile;
+}
+
+export interface DealTransfer {
+  id: string;
+  deal_id: string;
+  transfer_type: TransferType;
+  credential_payload: string;
+  handover_instructions?: string;
+  verified_by_buyer: boolean;
+  verified_at?: string;
+  created_at: string;
+}
+
+export interface DealMessage {
+  id: string;
+  deal_id: string;
+  sender_id: string;
+  sender_role: 'buyer' | 'seller' | 'platform_arbitrator';
+  message: string;
+  message_type: DealMessageType;
+  metadata?: Record<string, any>;
+  created_at: string;
+  sender?: Profile;
+}
+
+export interface DealRoom {
+  id: string;
+  offer_id?: string;
+  product_id: string;
+  buyer_id: string;
+  seller_id: string;
+  agreed_price: number;
+  platform_fee: number;
+  seller_payout: number;
+  escrow_status: DealStatus;
+  razorpay_order_id?: string;
+  razorpay_payment_id?: string;
+  deposit_timestamp?: string;
+  inspection_period_hours: number;
+  inspection_deadline?: string;
+  created_at: string;
+  completed_at?: string;
+  updated_at: string;
+  product?: Product;
+  buyer?: Profile;
+  seller?: Profile;
+  transfers?: DealTransfer[];
+  messages?: DealMessage[];
+}
+
 
 

@@ -71,11 +71,12 @@ create table if not exists public.products (
   title text not null,
   slug text not null,
   description text default '',
-  product_type text not null check (product_type in ('digital_file', 'digital_link', 'physical', 'service')),
+  product_type text not null check (product_type in ('digital_file', 'digital_link', 'physical', 'service', 'app', 'website', 'saas', 'source_code', 'social_account')),
   base_price numeric(10,2) not null check (base_price >= 0),
-  platform_fee_percent numeric(4,2) not null default 5.00,
+  platform_fee_percent numeric(4,2) not null default 15.00,
   thumbnail_url text not null,
   media_gallery text[] default array[]::text[],
+  asset_metrics jsonb default '{}'::jsonb,
   status text not null default 'published' check (status in ('draft', 'pending_review', 'published', 'flagged', 'suspended')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -620,4 +621,84 @@ create policy "Applications: Public insert" on public.job_applications for inser
 create policy "Applications: Recruiter manage job candidates" on public.job_applications for select using (
   job_id in (select id from public.jobs where poster_id = auth.uid())
 );
+
+-- ==========================================
+-- 14. DIGITAL ASSETS, APPS, SAAS & DEALS ENGINE
+-- ==========================================
+create table if not exists public.offers (
+  id uuid primary key default gen_random_uuid(),
+  product_id uuid not null references public.products(id) on delete cascade,
+  buyer_id uuid not null references public.profiles(id),
+  seller_id uuid not null references public.profiles(id),
+  initial_offer_amount numeric(10,2) not null check (initial_offer_amount > 0),
+  current_offer_amount numeric(10,2) not null check (current_offer_amount > 0),
+  last_offered_by text not null default 'buyer' check (last_offered_by in ('buyer', 'seller')),
+  status text not null default 'pending' check (status in ('pending', 'countered', 'accepted', 'rejected', 'expired', 'deal_initiated')),
+  terms_note text default '',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.deal_rooms (
+  id uuid primary key default gen_random_uuid(),
+  offer_id uuid references public.offers(id),
+  product_id uuid not null references public.products(id),
+  buyer_id uuid not null references public.profiles(id),
+  seller_id uuid not null references public.profiles(id),
+  agreed_price numeric(10,2) not null check (agreed_price > 0),
+  platform_fee numeric(10,2) not null default 0.00,
+  seller_payout numeric(10,2) not null default 0.00,
+  escrow_status text not null default 'awaiting_deposit' check (escrow_status in ('awaiting_deposit', 'escrow_locked', 'credentials_transferred', 'buyer_inspecting', 'completed_paid', 'disputed')),
+  razorpay_order_id text,
+  razorpay_payment_id text,
+  deposit_timestamp timestamptz,
+  inspection_period_hours int not null default 48,
+  inspection_deadline timestamptz,
+  created_at timestamptz not null default now(),
+  completed_at timestamptz,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.deal_transfers (
+  id uuid primary key default gen_random_uuid(),
+  deal_id uuid not null references public.deal_rooms(id) on delete cascade,
+  transfer_type text not null check (transfer_type in ('domain_auth_code', 'github_repo_transfer', 'cloud_hosting_access', 'social_login_credentials', 'apk_ipa_source', 'custom_transfer')),
+  credential_payload text not null,
+  handover_instructions text default '',
+  verified_by_buyer boolean not null default false,
+  verified_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.deal_messages (
+  id uuid primary key default gen_random_uuid(),
+  deal_id uuid not null references public.deal_rooms(id) on delete cascade,
+  sender_id uuid not null references public.profiles(id),
+  sender_role text not null check (sender_role in ('buyer', 'seller', 'platform_arbitrator')),
+  message text not null,
+  message_type text not null default 'chat' check (message_type in ('chat', 'counter_offer', 'payment_deposit', 'credentials_submitted', 'escrow_released', 'dispute_opened')),
+  metadata jsonb default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+alter table public.offers enable row level security;
+alter table public.deal_rooms enable row level security;
+alter table public.deal_transfers enable row level security;
+alter table public.deal_messages enable row level security;
+
+create policy "Offers: Involving parties view" on public.offers for select using (auth.uid() = buyer_id or auth.uid() = seller_id);
+create policy "Offers: Buyer create" on public.offers for insert with check (auth.uid() = buyer_id);
+create policy "Offers: Involving parties update" on public.offers for update using (auth.uid() = buyer_id or auth.uid() = seller_id);
+
+create policy "Deal Rooms: Involving parties view" on public.deal_rooms for select using (auth.uid() = buyer_id or auth.uid() = seller_id);
+create policy "Deal Rooms: Involving parties update" on public.deal_rooms for update using (auth.uid() = buyer_id or auth.uid() = seller_id);
+
+create policy "Deal Transfers: Involving parties access" on public.deal_transfers for all using (
+  deal_id in (select id from public.deal_rooms where buyer_id = auth.uid() or seller_id = auth.uid())
+);
+
+create policy "Deal Messages: Involving parties access" on public.deal_messages for all using (
+  deal_id in (select id from public.deal_rooms where buyer_id = auth.uid() or seller_id = auth.uid())
+);
+
 

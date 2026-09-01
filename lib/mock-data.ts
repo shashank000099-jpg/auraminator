@@ -235,6 +235,214 @@ export const MOCK_PRODUCTS: Product[] = [
       updated_at: new Date().toISOString(),
     },
   },
+  // ==========================================
+  // DIGITAL ASSETS, SAAS, APPS & SOCIAL ACCOUNTS
+  // ==========================================
+  {
+    id: "prod-009",
+    seller_id: "seller-004",
+    title: "VividAI • Automated Short-Form Video Generator SaaS",
+    slug: "vividai-automated-video-generator-saas",
+    description: "Revenue-generating B2B SaaS platform that converts long-form podcasts into viral TikTok/Reels with auto-captions and B-roll. Currently doing ₹48,500/mo verified MRR on Stripe with 82% gross margins. 100% turnkey asset including production codebase, domain, and Stripe customer base.",
+    product_type: "saas",
+    base_price: 450000,
+    platform_fee_percent: 15.0,
+    thumbnail_url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
+    media_gallery: [
+      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=80"
+    ],
+    asset_metrics: {
+      mrr: 48500,
+      arr: 582000,
+      net_profit_monthly: 39000,
+      tech_stack: ["Next.js 14", "FastAPI", "Replicate AI", "Stripe Billing", "Supabase", "TailwindCSS"],
+      domain_name: "vividai.tools",
+      monthly_visitors: 34200,
+      is_monetized: true,
+      transfer_items: [
+        "Primary Domain (vividai.tools) EPP Auth Code Transfer",
+        "Full GitHub Organization & Source Code Ownership",
+        "Stripe Customer Base & Recurring Subscription Billing Transfer",
+        "Cloudflare DNS & Vercel Production Environment Deployment Keys",
+        "30 Days Post-Sale Developer Technical Support"
+      ]
+    },
+    status: "published",
+    created_at: new Date(Date.now() - 64800000).toISOString(),
+    updated_at: new Date().toISOString(),
+    seller: {
+      id: "seller-004",
+      full_name: "SYNTAX LABS",
+      username: "syntaxlabs",
+      avatar_url: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
+      is_verified: true,
+      role: "seller",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+  },
+  {
+    id: "prod-010",
+    seller_id: "seller-002",
+    title: "PulseFit Pro • iOS & Android Flutter Fitness App",
+    slug: "pulsefit-pro-flutter-fitness-app",
+    description: "Published mobile fitness & micro-workout tracker app with 65,000+ organic downloads across Apple App Store and Google Play Store. Built with clean Flutter Clean Architecture, offline-first SQLite sync, and RevenueCat in-app subscriptions.",
+    product_type: "app",
+    base_price: 280000,
+    platform_fee_percent: 15.0,
+    thumbnail_url: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=1200&q=80",
+    media_gallery: [
+      "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&w=1200&q=80"
+    ],
+    asset_metrics: {
+      platform: "both",
+      downloads_count: 65000,
+      monthly_visitors: 14200,
+      tech_stack: ["Flutter", "Dart", "Firebase", "RevenueCat", "App Store Connect", "Play Console"],
+      is_monetized: true,
+      transfer_items: [
+        "Apple App Store Connect App Transfer (Zero downtime for existing users)",
+        "Google Play Console App Transfer",
+        "Complete Flutter / Dart Source Code Repository with documentation",
+        "Figma UI Kit & Marketing Assets"
+      ]
+    },
+    status: "published",
+    created_at: new Date(Date.now() - 72000000).toISOString(),
+    updated_at: new Date().toISOString(),
+    seller: {
+      id: "seller-002",
+      full_name: "GLYPH LABS",
+      username: "glyphlabs",
+      avatar_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80",
+      is_verified: true,
+      role: "seller",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+  },
+  {
+    id: "prod-011",
+    seller_id: "seller-004",
+    title: "ApexEscrow • Multi-Vendor Split Commerce Core (Exclusive IP)",
+    slug: "apexescrow-multi-vendor-commerce-core",
+    description: "Battle-tested multi-tenant commerce and dual-entry escrow engine. Includes atomic inventory locks, 15% platform split calculator, Razorpay Route linked account dispatch, and Shiprocket automated tracking webhooks. Full commercial copyright assignment.",
+    product_type: "source_code",
+    base_price: 125000,
+    platform_fee_percent: 15.0,
+    thumbnail_url: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1200&q=80",
+    media_gallery: [
+      "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1200&q=80"
+    ],
+    asset_metrics: {
+      license_type: "exclusive_ip",
+      tech_stack: ["Next.js 14", "TypeScript", "PostgreSQL", "Supabase", "Razorpay Route", "Tailwind CSS"],
+      github_repo_url: "github.com/syntaxlabs/apex-escrow-core",
+      transfer_items: [
+        "100% Exclusive Copyright & IP Assignment Contract",
+        "Private GitHub Repository Ownership Transfer",
+        "Database Migrations & PostgreSQL RPC Scripts",
+        "Architecture Documentation & Setup Guide"
+      ]
+    },
+    status: "published",
+    created_at: new Date(Date.now() - 79200000).toISOString(),
+    updated_at: new Date().toISOString(),
+    seller: {
+      id: "seller-004",
+      full_name: "SYNTAX LABS",
+      username: "syntaxlabs",
+      avatar_url: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
+      is_verified: true,
+      role: "seller",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+  },
+  {
+    id: "prod-012",
+    seller_id: "seller-001",
+    title: "@CodeVortexAI • 142k Subscribers YouTube Channel (Monetized)",
+    slug: "codevortexai-142k-youtube-channel",
+    description: "Verified active YouTube channel in the AI, Web Development & Next.js tutorial niche. 142,000+ real organic subscribers, 850k monthly video views, and active AdSense monetization generating ~₹45,000/month consistently. Zero strikes, clean standing.",
+    product_type: "social_account",
+    base_price: 390000,
+    platform_fee_percent: 15.0,
+    thumbnail_url: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=1200&q=80",
+    media_gallery: [
+      "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1598550476439-6847785fcea6?auto=format&fit=crop&w=1200&q=80"
+    ],
+    asset_metrics: {
+      platform: "youtube",
+      handle: "@CodeVortexAI",
+      followers_count: 142000,
+      monthly_visitors: 850000,
+      is_monetized: true,
+      engagement_rate: "6.2%",
+      transfer_items: [
+        "Primary Google Brand Account Ownership Transfer (7-day standard handover security protocol)",
+        "YouTube Studio Monetization & AdSense Account Re-link",
+        "Associated Community Discord (12,000 members)",
+        "Brand Sponsorship Outreach Template Pack"
+      ]
+    },
+    status: "published",
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    updated_at: new Date().toISOString(),
+    seller: {
+      id: "seller-001",
+      full_name: "KAIZEN STUDIOS",
+      username: "kaizen",
+      avatar_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
+      is_verified: true,
+      role: "seller",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+  },
+  {
+    id: "prod-013",
+    seller_id: "seller-001",
+    title: "@kaizen.streetwear • 88.5k Followers Instagram Brand Page",
+    slug: "kaizen-streetwear-88k-instagram",
+    description: "High-engagement aesthetic Instagram page in the Luxury Streetwear & Cyberpunk fashion niche. 88,500 organic followers, 4.8% average engagement rate, and verified story reach of 18k+ per drop. Perfect for launching direct-to-consumer apparel.",
+    product_type: "social_account",
+    base_price: 180000,
+    platform_fee_percent: 15.0,
+    thumbnail_url: "https://images.unsplash.com/photo-1611262588024-d12430b98920?auto=format&fit=crop&w=1200&q=80",
+    media_gallery: [
+      "https://images.unsplash.com/photo-1611262588024-d12430b98920?auto=format&fit=crop&w=1200&q=80"
+    ],
+    asset_metrics: {
+      platform: "instagram",
+      handle: "@kaizen.streetwear",
+      followers_count: 88500,
+      engagement_rate: "4.8%",
+      is_monetized: false,
+      transfer_items: [
+        "Original Registration Email (OGE) Handover",
+        "Instagram Account Credential Ownership Reset",
+        "Supplier & Textile Mill Manufacturing Contact Rolodex",
+        "High-Res Vector Brand Assets & Logo Files"
+      ]
+    },
+    status: "published",
+    created_at: new Date(Date.now() - 93600000).toISOString(),
+    updated_at: new Date().toISOString(),
+    seller: {
+      id: "seller-001",
+      full_name: "KAIZEN STUDIOS",
+      username: "kaizen",
+      avatar_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
+      is_verified: true,
+      role: "seller",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+  },
 ];
 
 export const MOCK_JOBS: import("./types").JobPosting[] = [
@@ -378,4 +586,163 @@ export const MOCK_APPLICATIONS: import("./types").JobApplication[] = [
     updated_at: new Date().toISOString(),
   },
 ];
+
+// ==========================================
+// MOCK OFFERS & PROTECTED DEAL ROOMS
+// ==========================================
+export const MOCK_OFFERS: import("./types").Offer[] = [
+  {
+    id: "offer-001",
+    product_id: "prod-009",
+    buyer_id: "buyer-001",
+    seller_id: "seller-004",
+    initial_offer_amount: 380000,
+    current_offer_amount: 410000,
+    last_offered_by: "seller",
+    status: "countered",
+    terms_note: "Offer includes immediate escrow deposit upon acceptance. Requesting 30 days developer transition support.",
+    created_at: new Date(Date.now() - 172800000).toISOString(),
+    updated_at: new Date(Date.now() - 14400000).toISOString(),
+    product: MOCK_PRODUCTS.find((p) => p.id === "prod-009"),
+    buyer: {
+      id: "buyer-001",
+      full_name: "Alex Mercer",
+      username: "alexmercer",
+      avatar_url: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
+      role: "buyer",
+      is_verified: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    seller: MOCK_PRODUCTS.find((p) => p.id === "prod-009")?.seller,
+  },
+  {
+    id: "offer-002",
+    product_id: "prod-012",
+    buyer_id: "buyer-001",
+    seller_id: "seller-001",
+    initial_offer_amount: 350000,
+    current_offer_amount: 365000,
+    last_offered_by: "buyer",
+    status: "accepted",
+    terms_note: "Agreed to 7-day Google brand account transfer protocol. Ready for escrow lock.",
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    updated_at: new Date(Date.now() - 3600000).toISOString(),
+    product: MOCK_PRODUCTS.find((p) => p.id === "prod-012"),
+    buyer: {
+      id: "buyer-001",
+      full_name: "Alex Mercer",
+      username: "alexmercer",
+      avatar_url: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
+      role: "buyer",
+      is_verified: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    seller: MOCK_PRODUCTS.find((p) => p.id === "prod-012")?.seller,
+  }
+];
+
+export const MOCK_DEAL_ROOMS: import("./types").DealRoom[] = [
+  {
+    id: "deal-001",
+    offer_id: "offer-001",
+    product_id: "prod-009",
+    buyer_id: "buyer-001",
+    seller_id: "seller-004",
+    agreed_price: 410000,
+    platform_fee: 61500, // 15% platform commission
+    seller_payout: 348500, // 85% seller net payout
+    escrow_status: "buyer_inspecting",
+    razorpay_order_id: "order_deal_9981249",
+    razorpay_payment_id: "pay_escrow_8819203",
+    deposit_timestamp: new Date(Date.now() - 43200000).toISOString(),
+    inspection_period_hours: 48,
+    inspection_deadline: new Date(Date.now() + 129600000).toISOString(),
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    updated_at: new Date().toISOString(),
+    product: MOCK_PRODUCTS.find((p) => p.id === "prod-009"),
+    buyer: {
+      id: "buyer-001",
+      full_name: "Alex Mercer",
+      username: "alexmercer",
+      avatar_url: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
+      role: "buyer",
+      is_verified: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    seller: MOCK_PRODUCTS.find((p) => p.id === "prod-009")?.seller,
+    transfers: [
+      {
+        id: "trf-001",
+        deal_id: "deal-001",
+        transfer_type: "domain_auth_code",
+        credential_payload: "EPP-AUTH-CODE: #vividai-epp-99214981-sec",
+        handover_instructions: "Use this EPP code at Namecheap/GoDaddy/Cloudflare Registrar to initiate the domain transfer.",
+        verified_by_buyer: true,
+        verified_at: new Date(Date.now() - 36000000).toISOString(),
+        created_at: new Date(Date.now() - 40000000).toISOString(),
+      },
+      {
+        id: "trf-002",
+        deal_id: "deal-001",
+        transfer_type: "github_repo_transfer",
+        credential_payload: "GITHUB-INVITE: https://github.com/vividai-tools (Admin Role Granted to @alexmercer)",
+        handover_instructions: "Accept the organization owner invitation on GitHub. Full repository IP rights transferred.",
+        verified_by_buyer: true,
+        verified_at: new Date(Date.now() - 28800000).toISOString(),
+        created_at: new Date(Date.now() - 32000000).toISOString(),
+      },
+      {
+        id: "trf-003",
+        deal_id: "deal-001",
+        transfer_type: "cloud_hosting_access",
+        credential_payload: "STRIPE-TRANSFER-ID: acct_1N9xZ8K9L9s821 • Stripe customer recurring subscription billing ownership transferred.",
+        handover_instructions: "Stripe team invite dispatched to alex@auraminator.in. Payout destination re-linked.",
+        verified_by_buyer: false,
+        created_at: new Date(Date.now() - 20000000).toISOString(),
+      }
+    ],
+    messages: [
+      {
+        id: "msg-001",
+        deal_id: "deal-001",
+        sender_id: "buyer-001",
+        sender_role: "buyer",
+        message: "Submitted initial offer of ₹3,80,000 for VividAI Turnkey SaaS.",
+        message_type: "counter_offer",
+        created_at: new Date(Date.now() - 86400000).toISOString(),
+      },
+      {
+        id: "msg-002",
+        deal_id: "deal-001",
+        sender_id: "seller-004",
+        sender_role: "seller",
+        message: "Countered at ₹4,10,000 including 30 days developer support and active Stripe accounts.",
+        message_type: "counter_offer",
+        created_at: new Date(Date.now() - 50000000).toISOString(),
+      },
+      {
+        id: "msg-003",
+        deal_id: "deal-001",
+        sender_id: "buyer-001",
+        sender_role: "buyer",
+        message: "Offer of ₹4,10,000 accepted. Deposited ₹4,10,000 + Gateway fee into Auraminator Escrow.",
+        message_type: "payment_deposit",
+        created_at: new Date(Date.now() - 43200000).toISOString(),
+      },
+      {
+        id: "msg-004",
+        deal_id: "deal-001",
+        sender_id: "seller-004",
+        sender_role: "seller",
+        message: "Submitted Domain EPP Code, GitHub Organization Invite, and Stripe Account handover credentials in the secure handover vault.",
+        message_type: "credentials_submitted",
+        created_at: new Date(Date.now() - 20000000).toISOString(),
+      }
+    ]
+  }
+];
+
 

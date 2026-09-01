@@ -37,22 +37,29 @@ export function Navbar() {
                 DROPS
               </Link>
               <Link
+                href="/account/deals"
+                className={`transition-colors flex items-center gap-1 ${pathname.startsWith("/account/deals") || pathname.startsWith("/deals") ? "text-emerald-400 font-bold" : "text-zinc-400 hover:text-white"}`}
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+                <span>DEALS</span>
+              </Link>
+              <Link
+                href="/explore?type=saas"
+                className="text-zinc-400 hover:text-white transition-colors"
+              >
+                APPS &amp; SAAS
+              </Link>
+              <Link
                 href="/explore?type=service"
                 className={`transition-colors ${pathname === "/explore?type=service" ? "text-white font-bold" : "text-zinc-400 hover:text-white"}`}
               >
-                TECH SERVICES
+                SERVICES
               </Link>
               <Link
                 href="/explore?type=physical"
                 className="text-zinc-400 hover:text-white transition-colors"
               >
                 STREETWEAR
-              </Link>
-              <Link
-                href="/explore?type=digital_file"
-                className="text-zinc-400 hover:text-white transition-colors"
-              >
-                DIGITAL VAULT
               </Link>
               <Link
                 href="/jobs"
@@ -64,7 +71,7 @@ export function Navbar() {
                 href="/seller/dashboard"
                 className={`transition-colors ${pathname.startsWith("/seller") ? "text-white font-bold" : "text-zinc-400 hover:text-white"}`}
               >
-                SELLER STUDIO
+                STUDIO
               </Link>
             </nav>
           </div>
@@ -118,6 +125,14 @@ export function Navbar() {
                       className="block px-3 py-2 rounded-lg text-zinc-300 hover:bg-white/10 hover:text-white transition-colors"
                     >
                       Orders &amp; Downloads
+                    </Link>
+
+                    <Link
+                      href="/account/deals"
+                      onClick={() => setIsUserMenuOpen(false)}
+                      className="block px-3 py-2 rounded-lg text-emerald-400 hover:bg-white/10 transition-colors font-bold"
+                    >
+                      Deals &amp; Negotiations
                     </Link>
 
                     <Link

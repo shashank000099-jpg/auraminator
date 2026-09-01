@@ -49,13 +49,13 @@ function ExploreContent() {
         {/* Header */}
         <div className="border-b border-border pb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight uppercase">MARKETPLACE RELEASES</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight uppercase">MARKETPLACE &amp; ASSET VAULT</h1>
             <p className="text-xs font-mono text-zinc-400 mt-1">
-              Browse verified drops: 3D shader files, luxury 500 GSM apparel, Notion OS systems, and 1-on-1 strategy sprints.
+              Explore verified turnkey assets: SaaS platforms, mobile apps, source code repos, social accounts, luxury apparel, and tech services.
             </p>
           </div>
           <div className="text-xs font-mono text-zinc-400 bg-surface px-3 py-1.5 rounded-lg border border-border">
-            SHOWING <strong className="text-white">{filteredProducts.length}</strong> VERIFIED DROPS
+            SHOWING <strong className="text-white">{filteredProducts.length}</strong> VERIFIED ASSETS
           </div>
         </div>
 
@@ -65,7 +65,7 @@ function ExploreContent() {
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
             <input
               type="text"
-              placeholder="Search by product name, 3D asset, streetwear, or creator..."
+              placeholder="Search by SaaS name, mobile app, source repo, YouTube/IG handle, or creator..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="h-10 w-full rounded-lg border border-border bg-surface pl-10 pr-4 text-xs font-mono text-white placeholder:text-zinc-500 focus:border-white focus:outline-none transition-colors"
@@ -75,11 +75,13 @@ function ExploreContent() {
           <div className="flex items-center gap-2 w-full md:w-auto font-mono text-xs overflow-x-auto pb-2 md:pb-0">
             {/* Category pills */}
             {[
-              { id: "all", label: "ALL DROPS" },
-              { id: "physical", label: "STREETWEAR (Physical)" },
-              { id: "service", label: "TECH SERVICES (Debug & Dev)" },
-              { id: "digital_file", label: "DIGITAL VAULT (Files)" },
-              { id: "digital_link", label: "NOTION WORKSPACES" },
+              { id: "all", label: "ALL ASSETS" },
+              { id: "saas", label: "APPS & SAAS" },
+              { id: "source_code", label: "SOURCE CODE IP" },
+              { id: "social_account", label: "SOCIAL ACCOUNTS" },
+              { id: "physical", label: "STREETWEAR" },
+              { id: "service", label: "TECH SERVICES" },
+              { id: "digital_file", label: "DIGITAL VAULTS" },
             ].map((type) => (
               <button
                 key={type.id}
