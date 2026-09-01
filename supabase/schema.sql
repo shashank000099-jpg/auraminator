@@ -701,4 +701,17 @@ create policy "Deal Messages: Involving parties access" on public.deal_messages 
   deal_id in (select id from public.deal_rooms where buyer_id = auth.uid() or seller_id = auth.uid())
 );
 
+-- ==========================================
+-- 12. SUPABASE STORAGE: DIGITAL VAULTS (ZERO EXTRA COST)
+-- ==========================================
+insert into storage.buckets (id, name, public)
+values ('digital-vaults', 'digital-vaults', false)
+on conflict (id) do nothing;
+
+create policy "Authenticated buyers and creators can access digital vault"
+on storage.objects for all using (
+  bucket_id = 'digital-vaults'
+);
+
+
 

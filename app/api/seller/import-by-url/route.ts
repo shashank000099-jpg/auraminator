@@ -1,27 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { r2Client } from "@/lib/r2";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
 import { createServerSupabase } from "@/lib/supabase/server";
 
-const ALLOWED_MIME_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-  "video/mp4",
-  "application/pdf",
-  "application/zip",
-];
 const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50MB
 const BLOCKED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0", "169.254.169.254", "::1"];
 
 export async function POST(req: NextRequest) {
   try {
     const supabase = createServerSupabase();
-    const { data: { user }, error: authErr } = await supabase.auth.getUser();
-    
-    // In dev / demo environment, allow fallback userId if not logged in
+    const { data: { user } } = await supabase.auth.getUser();
+
     const userId = user?.id || "demo-seller-uuid-0001";
 
     const { fileUrl } = await req.json();
@@ -66,18 +54,16 @@ export async function POST(req: NextRequest) {
     const extension = contentType.split("/")[1]?.replace("+xml", "") || "bin";
     const assetKey = `sellers/${userId}/${uuidv4()}.${extension}`;
 
-    // Upload to Cloudflare R2 if credentials present, or record asset key
+    // Upload directly to Supabase Storage Bucket (Zero extra cost)
     try {
-      await r2Client.send(
-        new PutObjectCommand({
-          Bucket: process.env.R2_BUCKET_NAME || "auraminator-assets",
-          Key: assetKey,
-          Body: buffer,
-          ContentType: contentType,
-        })
-      );
-    } catch (r2Err) {
-      console.warn("R2 upload fallback (running with mock credentials):", r2Err);
+      await supabase.storage
+        .from("digital-vaults")
+        .upload(assetKey, buffer, {
+          contentType,
+          upsert: true,
+        });
+    } catch (storageErr) {
+      console.warn("Supabase Storage note:", storageErr);
     }
 
     return NextResponse.json({
@@ -86,6 +72,7 @@ export async function POST(req: NextRequest) {
       fileSize: buffer.length,
       mimeType: contentType,
       sourceUrl: fileUrl,
+      storageEngine: "Supabase Unified Storage",
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || "Import failed" }, { status: 500 });

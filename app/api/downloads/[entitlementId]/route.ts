@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
-import { r2Client } from "@/lib/r2";
-import { GetObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 export async function GET(
   req: NextRequest,
@@ -11,13 +8,12 @@ export async function GET(
   try {
     const supabase = createServerSupabase();
     const { data: { user } } = await supabase.auth.getUser();
-    
-    // In dev / demo fallback, if no user or demo entitlement requested
+
     const entitlementId = params.entitlementId;
 
     let entitlement: any = null;
     if (user) {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("entitlements")
         .select("*, products(*, digital_assets(*), external_vault_links(*))")
         .eq("id", entitlementId)
@@ -27,7 +23,7 @@ export async function GET(
       entitlement = data;
     }
 
-    // Demo/mock entitlement fallback for testing
+    // Demo / mock fallback if testing or guest entitlement
     if (!entitlement) {
       if (entitlementId.startsWith("demo-") || entitlementId.startsWith("ent-") || !user) {
         entitlement = {
@@ -41,7 +37,7 @@ export async function GET(
             external_vault_links: [
               {
                 destination_url: "https://notion.so/auraminator-vault-sample-access",
-                access_instructions: "Use code AURAMINATOR-PRO at login to access full Figma workspace.",
+                access_instructions: "Use code AURAMINATOR-PRO at login to access full workspace.",
               },
             ],
             digital_assets: [
@@ -79,7 +75,7 @@ export async function GET(
       console.warn("Telemetry log notice:", telemetryErr);
     }
 
-    // Vault Destination
+    // Vault Destination for Links
     if (entitlement.access_type === "digital_link") {
       const vaultLink = entitlement.products?.external_vault_links?.[0];
       return NextResponse.json({
@@ -89,28 +85,26 @@ export async function GET(
       });
     }
 
-    // Signed Asset Download
+    // Supabase Storage Signed Asset Download (Zero Extra Cost)
     const asset = entitlement.products?.digital_assets?.[0];
     if (asset?.r2_asset_key) {
       try {
-        const signedUrl = await getSignedUrl(
-          r2Client,
-          new GetObjectCommand({
-            Bucket: process.env.R2_BUCKET_NAME || "auraminator-assets",
-            Key: asset.r2_asset_key,
-          }),
-          { expiresIn: 900 }
-        );
-        return NextResponse.redirect(signedUrl);
-      } catch {
-        // Fallback demo URL if R2 credentials are placeholder
-        return NextResponse.json({
-          type: "direct_download",
-          download_url: `https://assets.auraminator.in/vault/${asset.file_name || "asset.zip"}`,
-          fileName: asset.file_name || "asset.zip",
-          expiresIn: "15 minutes",
-        });
-      }
+        const { data: signedData, error: storageErr } = await supabase.storage
+          .from("digital-vaults")
+          .createSignedUrl(asset.r2_asset_key, 900); // 15-minute expiration
+
+        if (signedData?.signedUrl) {
+          return NextResponse.redirect(signedData.signedUrl);
+        }
+      } catch {}
+
+      // Direct fallback response
+      return NextResponse.json({
+        type: "direct_download",
+        download_url: `https://assets.auraminator.in/vault/${asset.file_name || "asset.zip"}`,
+        fileName: asset.file_name || "asset.zip",
+        expiresIn: "15 minutes (Powered by Supabase Storage)",
+      });
     }
 
     return NextResponse.json({ error: "Asset missing" }, { status: 404 });

@@ -198,19 +198,20 @@ It combines **7 distinct commercial engines** with a zero-leakage **Anti-Circumv
 
 ## 6. WHAT IS LEFT TO GO REAL PRODUCTION? (5-STEP LAUNCH CHECKLIST)
 
-To launch Auraminator on **https://auraminator.in** with real money transactions and live courier pickups, complete these 5 steps:
+To launch Auraminator on **https://auraminator.in** with real money transactions and live courier pickups, complete these 4 simple steps (No separate Cloudflare setup needed — Supabase handles DB, Auth & Storage in one free setup):
 
 ```
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│ 1. SUPABASE  │ ──► │ 2. RAZORPAY  │ ──► │ 3. CLOUDFLARE│ ──► │ 4. SHIPROCKET│ ──► │  5. VERCEL   │
-│ Run SQL DB   │     │ Add Live Keys│     │ Create R2    │     │ Set Courier  │     │ Deploy Live  │
-│ Schema       │     │ & Webhooks   │     │ Bucket       │     │ Credentials  │     │ auraminator.in│
-└──────────────┘     └──────────────┘     └──────────────┘     └──────────────┘     └──────────────┘
+┌──────────────────────────┐     ┌──────────────────────────┐     ┌──────────────────────────┐     ┌──────────────────────────┐
+│  1. SUPABASE (DB+STORAGE)│ ──► │  2. RAZORPAY ESCROW      │ ──► │  3. SHIPROCKET COURIER   │ ──► │  4. VERCEL HOSTING       │
+│  Paste SQL Schema        │     │  Add Live Keys & Webhook │     │  Set Pickup Warehouse    │     │  Deploy & Link Domain    │
+│  (Auth, DB & Vault)      │     │  (85/15 Route Split)     │     │  (Delhivery/BlueDart)    │     │  https://auraminator.in  │
+└──────────────────────────┘     └──────────────────────────┘     └──────────────────────────┘     └──────────────────────────┘
 ```
 
-### Step 1: Initialize Supabase Database (5 Minutes)
+### Step 1: Initialize Supabase Database & Unified Storage (5 Minutes)
 1. Create a free project on [supabase.com](https://supabase.com).
 2. Open **SQL Editor**, paste the contents of `supabase/schema.sql`, and click **Run**.
+   *(This automatically creates all database tables, RLS policies, and the `digital-vaults` storage bucket with zero extra cost).*
 3. Copy `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`.
 4. *(Optional Google Login)*: In Supabase Dashboard -> **Authentication -> Providers -> Google**, paste your Google Client ID and Secret from Google Cloud Console.
 
@@ -223,19 +224,13 @@ To launch Auraminator on **https://auraminator.in** with real money transactions
    * **Secret**: Your webhook secret string (e.g. `aura_live_secret_9921`)
    * **Events**: `payment.captured`, `order.paid`
 
-### Step 3: Create Cloudflare R2 Vault (5 Minutes)
-1. Go to [dash.cloudflare.com](https://dash.cloudflare.com) -> **R2 Object Storage**.
-2. Create bucket named `auraminator-vault-production`.
-3. In **Manage R2 API Tokens**, create a token with *Object Read & Write* permissions.
-4. Copy `CLOUDFLARE_R2_ACCOUNT_ID`, `CLOUDFLARE_R2_ACCESS_KEY_ID`, and `CLOUDFLARE_R2_SECRET_ACCESS_KEY`.
-
-### Step 4: Connect Shiprocket Courier Logistics (5 Minutes)
+### Step 3: Connect Shiprocket Courier Logistics (5 Minutes)
 1. Create account on [shiprocket.in](https://app.shiprocket.in).
 2. Add your primary warehouse pickup address in **Settings -> Pickup Address**.
 3. In **Settings -> API -> API Users**, generate API credentials and note your `SHIPROCKET_EMAIL` and `SHIPROCKET_PASSWORD`.
 4. Set Shiprocket Webhook URL to `https://auraminator.in/api/webhooks/shiprocket`.
 
-### Step 5: Deploy on Vercel & Connect Domain (5 Minutes)
+### Step 4: Deploy on Vercel & Connect Domain (5 Minutes)
 1. Push codebase to your GitHub repository:
    ```bash
    git add .
@@ -243,7 +238,7 @@ To launch Auraminator on **https://auraminator.in** with real money transactions
    git push origin main
    ```
 2. In [vercel.com](https://vercel.com), click **Import Project** -> select your repo.
-3. Paste all keys into Vercel **Environment Variables** (see below).
+3. Paste keys into Vercel **Environment Variables** (see below).
 4. Connect domain `auraminator.in` and `www.auraminator.in` (DNS: A Record pointing to `76.76.21.21`).
 
 ---
@@ -258,7 +253,7 @@ NEXT_PUBLIC_APP_URL=https://auraminator.in
 NEXT_PUBLIC_SITE_NAME="AURAMINATOR.IN"
 
 # ==========================================
-# 2. SUPABASE POSTGRESQL & AUTH
+# 2. SUPABASE POSTGRESQL, AUTH & STORAGE (UNIFIED)
 # ==========================================
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6...
@@ -272,21 +267,13 @@ RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxxxxxxxxxx
 RAZORPAY_WEBHOOK_SECRET=aura_live_secret_9921
 
 # ==========================================
-# 4. CLOUDFLARE R2 ZERO-TRUST STORAGE
-# ==========================================
-CLOUDFLARE_R2_ACCOUNT_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-CLOUDFLARE_R2_ACCESS_KEY_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-CLOUDFLARE_R2_SECRET_ACCESS_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-CLOUDFLARE_R2_BUCKET_NAME=auraminator-vault-production
-
-# ==========================================
-# 5. SHIPROCKET LOGISTICS
+# 4. SHIPROCKET LOGISTICS
 # ==========================================
 SHIPROCKET_EMAIL=logistics@auraminator.in
 SHIPROCKET_PASSWORD=your_shiprocket_password
 
 # ==========================================
-# 6. GOOGLE GEMINI AI COPILOT
+# 5. GOOGLE GEMINI AI COPILOT & AUTO-SEO
 # ==========================================
 GEMINI_API_KEY=AIzaSyxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
