@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
 
+const GEMINI_MODELS = [
+  "gemini-3.5-flash",
+  "gemini-3.8-flash",
+  "gemini-3.1-flash-lite",
+  "gemini-3.6-flash",
+];
+
 export async function POST(req: NextRequest) {
   try {
     const { action, payload } = await req.json();
@@ -11,8 +18,7 @@ export async function POST(req: NextRequest) {
       const type = payload?.type || "saas";
 
       if (apiKey) {
-        try {
-          const aiPrompt = `You are the lead product architect and copywriter for Auraminator.in, a high-tier digital assets, SaaS, apps, and luxury streetwear marketplace.
+        const aiPrompt = `You are the lead product architect and copywriter for Auraminator.in, a high-tier digital assets, SaaS, apps, and luxury streetwear marketplace.
 Generate a high-converting, professional listing for:
 - Asset/Product Prompt: "${prompt}"
 - Product Category: "${type}"
@@ -26,34 +32,39 @@ Respond strictly in valid JSON format with these exact keys:
 }
 Do not include markdown codeblocks, output only raw JSON.`;
 
-          const res = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                contents: [{ parts: [{ text: aiPrompt }] }],
-                generationConfig: { temperature: 0.4, maxOutputTokens: 600 },
-              }),
+        // Multi-model resilience loop
+        for (const model of GEMINI_MODELS) {
+          try {
+            const res = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  contents: [{ parts: [{ text: aiPrompt }] }],
+                  generationConfig: { temperature: 0.4, maxOutputTokens: 600 },
+                }),
+              }
+            );
+
+            if (res.ok) {
+              const data = await res.json();
+              const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+              const clean = text.replace(/```json/g, "").replace(/```/g, "").trim();
+              const parsed = JSON.parse(clean);
+
+              return NextResponse.json({
+                success: true,
+                title: parsed.title,
+                description: parsed.description,
+                tags: parsed.tags || ["auraminator", "verified-drop"],
+                suggested_price: parsed.suggested_price || 2499,
+                modelUsed: model,
+              });
             }
-          );
-
-          if (res.ok) {
-            const data = await res.json();
-            const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-            const clean = text.replace(/```json/g, "").replace(/```/g, "").trim();
-            const parsed = JSON.parse(clean);
-
-            return NextResponse.json({
-              success: true,
-              title: parsed.title,
-              description: parsed.description,
-              tags: parsed.tags || ["auraminator", "verified-drop"],
-              suggested_price: parsed.suggested_price || 2499,
-            });
+          } catch (modelErr) {
+            console.warn(`Model ${model} failed, trying next fallback...`, modelErr);
           }
-        } catch (aiErr) {
-          console.error("Gemini AI listing generation warning:", aiErr);
         }
       }
 

@@ -76,10 +76,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // 1. Check local storage cache for instant UI responsiveness
+    let cachedUser: any = null;
     try {
-      const savedUser = localStorage.getItem("auraminator_user_session");
-      if (savedUser) {
-        setUser(JSON.parse(savedUser));
+      const saved = localStorage.getItem("auraminator_user_session");
+      if (saved) {
+        cachedUser = JSON.parse(saved);
+        setUser(cachedUser);
       }
     } catch {}
 
@@ -89,11 +91,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (session?.user && !error) {
           await fetchProfileAndSetUser(session.user);
-        } else {
-          // If no active supabase session, clear local storage
+        } else if (!cachedUser) {
           setUser(null);
           setProfile(null);
-          localStorage.removeItem("auraminator_user_session");
         }
       } catch {
         // Network or offline
@@ -127,6 +127,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: false, error: "Password is required." };
       }
 
+      // Try via Next.js API first (bulletproof on all networks)
+      try {
+        const apiRes = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email.trim(), password }),
+        });
+        const apiData = await apiRes.json();
+
+        if (apiRes.ok && apiData.success) {
+          // Sync client-side supabase session if possible
+          try {
+            await supabase.auth.signInWithPassword({ email: email.trim(), password });
+          } catch {}
+
+          setUser(apiData.user);
+          localStorage.setItem("auraminator_user_session", JSON.stringify(apiData.user));
+          return { success: true };
+        } else if (apiData.error) {
+          return { success: false, error: apiData.error };
+        }
+      } catch {
+        // Fallback to direct supabase client
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
@@ -157,45 +182,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   ) => {
     setIsLoading(true);
     try {
-      const trimmedEmail = email.trim();
-      const username = trimmedEmail.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+      const trimmedEmail = email.trim().toLowerCase();
 
-      const { data, error } = await supabase.auth.signUp({
-        email: trimmedEmail,
-        password,
-        options: {
-          data: {
-            full_name: fullName.trim(),
-            username,
-            role,
-            is_verified: role === "seller" ? false : true,
-          },
-        },
+      // Register via server-side API (auto-confirms email and creates profile)
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: trimmedEmail,
+          password,
+          fullName: fullName.trim(),
+          role,
+        }),
       });
 
-      if (error) {
-        return { success: false, error: error.message || "Registration failed." };
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        return { success: false, error: data.error || "Registration failed." };
       }
 
-      if (!data?.user) {
-        return { success: false, error: "Unable to create account. Please try again." };
-      }
-
-      // Upsert profile into public.profiles table
+      // Automatically sign in the verified user
       try {
-        await supabase.from("profiles").upsert({
-          id: data.user.id,
-          full_name: fullName.trim(),
-          username,
-          role,
-          is_verified: role === "seller" ? false : true,
-          updated_at: new Date().toISOString(),
+        await supabase.auth.signInWithPassword({
+          email: trimmedEmail,
+          password,
         });
-      } catch (profileErr) {
-        console.warn("Profile sync warning:", profileErr);
-      }
+      } catch {}
 
-      await fetchProfileAndSetUser(data.user);
+      setUser(data.user);
+      localStorage.setItem("auraminator_user_session", JSON.stringify(data.user));
       return { success: true };
     } catch (err: any) {
       return { success: false, error: err.message || "Sign up failed" };
