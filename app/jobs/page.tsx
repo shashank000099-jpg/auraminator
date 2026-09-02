@@ -18,25 +18,28 @@ import {
   Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { MOCK_JOBS } from "@/lib/mock-data";
 import { JobPosting } from "@/lib/types";
 import { AuraminatorIcon, AuraminatorLogo, AuraminatorWatermark } from "@/components/brand-logo";
 
 export default function JobBoardPage() {
-  const [jobs, setJobs] = useState<JobPosting[]>(MOCK_JOBS);
+  const [jobs, setJobs] = useState<JobPosting[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedType, setSelectedType] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetch("/api/jobs")
       .then((res) => res.json())
       .then((data) => {
-        if (data.jobs && data.jobs.length > 0) {
+        if (data.jobs) {
           setJobs(data.jobs);
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        setIsLoading(false);
+      });
   }, []);
 
   const filteredJobs = jobs.filter((job) => {
@@ -130,59 +133,76 @@ export default function JobBoardPage() {
             <span>Free Direct Applications</span>
           </div>
 
-          {filteredJobs.map((job) => (
-            <Link
-              key={job.id}
-              href={`/jobs/${job.id}`}
-              className="block rounded-xl border border-border bg-surface p-6 hover:border-white/40 transition-all brutalist-card group"
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-start gap-4">
-                  <div className="h-12 w-12 rounded-lg bg-zinc-900 border border-white/10 flex-shrink-0 relative overflow-hidden flex items-center justify-center">
-                    {job.company_logo ? (
-                      <Image src={job.company_logo} alt={job.company_name} fill className="object-cover" />
-                    ) : (
-                      <Building className="h-6 w-6 text-zinc-500" />
-                    )}
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
-                        {job.company_name}
-                      </span>
-                      <span className="h-1 w-1 rounded-full bg-zinc-600"></span>
-                      <span className="text-[10px] text-emerald-400 font-bold uppercase bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                        {job.job_type.replace("_", " ")}
-                      </span>
+          {filteredJobs.length === 0 ? (
+            <div className="py-20 text-center border border-dashed border-white/10 rounded-2xl bg-surface/40 p-8 space-y-4 font-mono">
+              <Briefcase className="h-10 w-10 text-zinc-600 mx-auto" />
+              <div className="space-y-1">
+                <h3 className="text-sm font-bold text-white uppercase">No Active Job Postings</h3>
+                <p className="text-xs text-zinc-500 font-sans max-w-md mx-auto">
+                  Hire top tech talent, designers, and growth engineers across India. Postings are 100% free with automated Google for Jobs SEO.
+                </p>
+              </div>
+              <Link href="/jobs/new">
+                <Button variant="primary" size="sm" className="font-mono text-xs">
+                  + POST FIRST TECH JOB FREE
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            filteredJobs.map((job) => (
+              <Link
+                key={job.id}
+                href={`/jobs/${job.id}`}
+                className="block rounded-xl border border-border bg-surface p-6 hover:border-white/40 transition-all brutalist-card group"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-start gap-4">
+                    <div className="h-12 w-12 rounded-lg bg-zinc-900 border border-white/10 flex-shrink-0 relative overflow-hidden flex items-center justify-center">
+                      {job.company_logo ? (
+                        <Image src={job.company_logo} alt={job.company_name} fill className="object-cover" />
+                      ) : (
+                        <Building className="h-6 w-6 text-zinc-500" />
+                      )}
                     </div>
 
-                    <h2 className="text-lg font-bold text-white group-hover:text-zinc-200 transition-colors">
-                      {job.title}
-                    </h2>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
+                          {job.company_name}
+                        </span>
+                        <span className="h-1 w-1 rounded-full bg-zinc-600"></span>
+                        <span className="text-[10px] text-emerald-400 font-bold uppercase bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                          {job.job_type.replace("_", " ")}
+                        </span>
+                      </div>
 
-                    <p className="text-xs text-zinc-400 font-sans line-clamp-2 max-w-2xl pt-1">
-                      {job.description}
-                    </p>
+                      <h2 className="text-lg font-bold text-white group-hover:text-zinc-200 transition-colors">
+                        {job.title}
+                      </h2>
+
+                      <p className="text-xs text-zinc-400 font-sans line-clamp-2 max-w-2xl pt-1">
+                        {job.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="text-left sm:text-right font-mono space-y-1 sm:self-center flex-shrink-0">
+                    <p className="font-bold text-white text-sm">{job.salary_range}</p>
+                    <div className="flex sm:justify-end items-center gap-1.5 text-[11px] text-zinc-400">
+                      <MapPin className="h-3.5 w-3.5" />
+                      <span>{job.location}</span>
+                    </div>
+                    <div className="pt-2">
+                      <span className="inline-flex items-center gap-1 text-xs text-white font-bold group-hover:translate-x-1 transition-transform">
+                        <span>View &amp; Apply</span>
+                        <ArrowUpRight className="h-3.5 w-3.5" />
+                      </span>
+                    </div>
                   </div>
                 </div>
-
-                <div className="text-left sm:text-right font-mono space-y-1 sm:self-center flex-shrink-0">
-                  <p className="font-bold text-white text-sm">{job.salary_range}</p>
-                  <div className="flex sm:justify-end items-center gap-1.5 text-[11px] text-zinc-400">
-                    <MapPin className="h-3.5 w-3.5" />
-                    <span>{job.location}</span>
-                  </div>
-                  <div className="pt-2">
-                    <span className="inline-flex items-center gap-1 text-xs text-white font-bold group-hover:translate-x-1 transition-transform">
-                      <span>View &amp; Apply</span>
-                      <ArrowUpRight className="h-3.5 w-3.5" />
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            ))
+          )}
         </div>
       </div>
     </div>

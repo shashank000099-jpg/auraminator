@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
-import { MOCK_PRODUCTS } from "@/lib/mock-data";
 
 export async function GET(
   req: NextRequest,
@@ -20,18 +19,8 @@ export async function GET(
       return NextResponse.json({ product });
     }
 
-    // Fallback to mock product
-    const mock = MOCK_PRODUCTS.find((p) => p.id === idOrSlug || p.slug === idOrSlug);
-    if (mock) {
-      return NextResponse.json({ product: mock });
-    }
-
     return NextResponse.json({ error: "Product not found" }, { status: 404 });
   } catch (err: any) {
-    const mock = MOCK_PRODUCTS.find((p) => p.id === params.id || p.slug === params.id);
-    if (mock) {
-      return NextResponse.json({ product: mock });
-    }
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

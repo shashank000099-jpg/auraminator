@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
-import { MOCK_OFFERS, MOCK_PRODUCTS } from "@/lib/mock-data";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -17,19 +16,19 @@ export async function GET(request: Request) {
         .or(role === "seller" ? `seller_id.eq.${session.user.id}` : `buyer_id.eq.${session.user.id}`)
         .order("created_at", { ascending: false });
 
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
         return NextResponse.json({ success: true, offers: data });
       }
     }
 
     return NextResponse.json({
       success: true,
-      offers: MOCK_OFFERS,
+      offers: [],
     });
   } catch (err: any) {
     return NextResponse.json({
       success: true,
-      offers: MOCK_OFFERS,
+      offers: [],
     });
   }
 }
@@ -46,17 +45,17 @@ export async function POST(request: Request) {
       );
     }
 
-    const product = MOCK_PRODUCTS.find((p) => p.id === productId);
-    const sellerId = product?.seller_id || "seller-001";
+    const supabase = createServerSupabase();
+    const { data: { session } } = await supabase.auth.getSession();
+    const buyerId = session?.user?.id || "anonymous-buyer";
 
-    let buyerId = "buyer-001";
-    try {
-      const supabase = createServerSupabase();
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        buyerId = session.user.id;
-      }
-    } catch {}
+    const { data: product } = await supabase
+      .from("products")
+      .select("seller_id")
+      .eq("id", productId)
+      .single();
+
+    const sellerId = product?.seller_id || "unknown-seller";
 
     const newOffer = {
       id: `offer-${Date.now()}`,
@@ -67,7 +66,7 @@ export async function POST(request: Request) {
       current_offer_amount: parseFloat(offerAmount),
       last_offered_by: "buyer" as const,
       status: "pending" as const,
-      terms_note: termsNote || "Standard buyer offer subject to 48h escrow inspection.",
+      terms_note: termsNote || "Standard buyer offer subject to 7-day escrow inspection.",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -76,7 +75,7 @@ export async function POST(request: Request) {
       success: true,
       offer: newOffer,
       message: "Offer submitted successfully. The seller has been notified to review or counter.",
-      dealUrl: `/deals/deal-001`,
+      dealUrl: `/account/deals`,
     });
   } catch (err: any) {
     return NextResponse.json(

@@ -30,20 +30,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatINR } from "@/lib/utils";
 import { useAuth } from "@/lib/context/auth-context";
-import { MOCK_DEAL_ROOMS } from "@/lib/mock-data";
 import { DealRoom, DealTransfer, DealMessage, TransferType } from "@/lib/types";
 import { detectContactInformation } from "@/lib/anti-circumvention";
 
 export default function ProtectedDealRoomPage() {
   const params = useParams();
   const router = useRouter();
-  const dealId = (params?.id as string) || "deal-001";
+  const dealId = (params?.id as string) || "";
   const { user } = useAuth();
 
   const [deal, setDeal] = useState<DealRoom | null>(null);
   const [activeRole, setActiveRole] = useState<"buyer" | "seller">("buyer");
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
   const [contactViolationWarning, setContactViolationWarning] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Interaction States
   const [counterAmount, setCounterAmount] = useState("");
@@ -64,28 +64,48 @@ export default function ProtectedDealRoomPage() {
   const [isActionLoading, setIsActionLoading] = useState(false);
 
   useEffect(() => {
+    if (!dealId) return;
+    setIsLoading(true);
     fetch(`/api/deals/${dealId}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.deal) {
           setDeal(data.deal);
-          setCounterAmount(data.deal.agreed_price.toString());
+          setCounterAmount(data.deal.agreed_price?.toString() || "0");
         }
       })
-      .catch(() => {
-        const mock = MOCK_DEAL_ROOMS.find((d) => d.id === dealId) || MOCK_DEAL_ROOMS[0];
-        setDeal(mock);
-        setCounterAmount(mock.agreed_price.toString());
+      .catch(() => {})
+      .finally(() => {
+        setIsLoading(false);
       });
   }, [dealId]);
 
-  if (!deal) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center font-mono text-xs">
         <div className="flex items-center gap-2">
           <div className="h-2 w-2 bg-white rounded-full animate-ping"></div>
           <span>INITIALIZING PROTECTED DEAL ROOM...</span>
         </div>
+      </div>
+    );
+  }
+
+  if (!deal) {
+    return (
+      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center font-mono text-xs p-6 space-y-4 text-center">
+        <AlertTriangle className="h-10 w-10 text-zinc-600" />
+        <div className="space-y-1">
+          <h1 className="text-base font-bold text-white uppercase">Deal Room Not Found</h1>
+          <p className="text-xs text-zinc-500 font-sans">
+            This negotiation room does not exist, has expired, or is restricted to authorized counterparties.
+          </p>
+        </div>
+        <Link href="/account/deals">
+          <Button variant="outline" size="sm">
+            <span>View My Deals</span>
+          </Button>
+        </Link>
       </div>
     );
   }

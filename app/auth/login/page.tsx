@@ -209,41 +209,8 @@ function LoginForm() {
           </Button>
         </form>
 
-        {/* 1-Click Fast Preview Login */}
-        <div className="pt-4 border-t border-border space-y-3">
-          <span className="text-[10px] text-zinc-500 uppercase tracking-wider block text-center">
-            Or Fast One-Click Demo Sign In
-          </span>
-
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => handleQuickDemoLogin("buyer")}
-              className="rounded-lg border border-border bg-surface-elevated p-2.5 text-left hover:border-white/40 transition-all text-xs group"
-            >
-              <div className="flex items-center gap-1.5 text-zinc-300 group-hover:text-white">
-                <User className="h-3.5 w-3.5 text-emerald-400" />
-                <span className="font-bold">Collector / Buyer</span>
-              </div>
-              <p className="text-[10px] text-zinc-500 font-sans mt-0.5">Explore &amp; Checkout</p>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleQuickDemoLogin("seller")}
-              className="rounded-lg border border-border bg-surface-elevated p-2.5 text-left hover:border-white/40 transition-all text-xs group"
-            >
-              <div className="flex items-center gap-1.5 text-zinc-300 group-hover:text-white">
-                <ShoppingBag className="h-3.5 w-3.5 text-emerald-400" />
-                <span className="font-bold">Creator / Studio</span>
-              </div>
-              <p className="text-[10px] text-zinc-500 font-sans mt-0.5">Seller Studio &amp; Payouts</p>
-            </button>
-          </div>
-        </div>
-
         <div className="pt-2 text-center text-xs font-sans text-zinc-400">
-          Don't have an account yet?{" "}
+          Don&apos;t have an account yet?{" "}
           <Link
             href={`/auth/signup${redirectUrl ? `?redirect=${encodeURIComponent(redirectUrl)}` : ""}`}
             className="text-white font-bold hover:underline font-mono"

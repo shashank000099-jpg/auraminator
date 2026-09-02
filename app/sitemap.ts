@@ -1,5 +1,4 @@
 import { MetadataRoute } from "next";
-import { MOCK_PRODUCTS, MOCK_JOBS } from "@/lib/mock-data";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://auraminator.in";
@@ -36,23 +35,25 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "daily",
       priority: 0.8,
     },
+    {
+      url: `${baseUrl}/terms`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/privacy`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/disclaimer`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.5,
+    },
   ];
 
-  // Dynamic Product & Digital Asset Routes
-  const productRoutes: MetadataRoute.Sitemap = MOCK_PRODUCTS.map((product) => ({
-    url: `${baseUrl}/product/${product.slug}`,
-    lastModified: new Date(product.created_at || Date.now()),
-    changeFrequency: "daily",
-    priority: 0.85,
-  }));
-
-  // Dynamic Job Board Routes
-  const jobRoutes: MetadataRoute.Sitemap = MOCK_JOBS.map((job) => ({
-    url: `${baseUrl}/jobs/${job.id}`,
-    lastModified: new Date(job.created_at || Date.now()),
-    changeFrequency: "weekly",
-    priority: 0.8,
-  }));
-
-  return [...staticRoutes, ...productRoutes, ...jobRoutes];
+  return staticRoutes;
 }

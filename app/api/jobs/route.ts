@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
-import { MOCK_JOBS } from "@/lib/mock-data";
 import { v4 as uuidv4 } from "uuid";
 import { generateAutomatedSeo } from "@/lib/gemini-seo";
 
@@ -23,39 +22,23 @@ export async function GET(req: NextRequest) {
 
     const { data: dbJobs, error } = await query.order("created_at", { ascending: false });
 
-    if (!error && dbJobs && dbJobs.length > 0) {
-      let filtered = dbJobs;
-      if (search) {
-        filtered = filtered.filter(
-          (j) =>
-            j.title.toLowerCase().includes(search) ||
-            j.company_name.toLowerCase().includes(search) ||
-            j.description.toLowerCase().includes(search)
-        );
-      }
-      return NextResponse.json({ jobs: filtered });
+    if (error || !dbJobs) {
+      return NextResponse.json({ jobs: [] });
     }
 
-    // Fallback to rich mock data
-    let fallback = MOCK_JOBS;
-    if (category && category !== "all") {
-      fallback = fallback.filter((j) => j.role_category === category);
-    }
-    if (jobType && jobType !== "all") {
-      fallback = fallback.filter((j) => j.job_type === jobType);
-    }
+    let filtered = dbJobs;
     if (search) {
-      fallback = fallback.filter(
+      filtered = filtered.filter(
         (j) =>
-          j.title.toLowerCase().includes(search) ||
-          j.company_name.toLowerCase().includes(search) ||
-          j.description.toLowerCase().includes(search)
+          j.title?.toLowerCase().includes(search) ||
+          j.company_name?.toLowerCase().includes(search) ||
+          j.description?.toLowerCase().includes(search)
       );
     }
 
-    return NextResponse.json({ jobs: fallback });
+    return NextResponse.json({ jobs: filtered });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message, jobs: MOCK_JOBS }, { status: 200 });
+    return NextResponse.json({ jobs: [] }, { status: 200 });
   }
 }
 

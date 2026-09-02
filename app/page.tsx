@@ -20,24 +20,28 @@ import {
   FileCheck,
 } from "lucide-react";
 import { ProductCard } from "@/components/product-card";
-import { MOCK_PRODUCTS } from "@/lib/mock-data";
+import { Product } from "@/lib/types";
 import { formatINR } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { AuraminatorIcon, AuraminatorLogo, AuraminatorWatermark, AuraminatorSeal } from "@/components/brand-logo";
 
 export default function HomePage() {
-  const [products, setProducts] = useState(MOCK_PRODUCTS);
+  const [products, setProducts] = useState<Product[]>([]);
   const [activeFilter, setActiveFilter] = useState("all");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetch("/api/products")
       .then((res) => res.json())
       .then((data) => {
-        if (data.products && data.products.length > 0) {
+        if (data.products) {
           setProducts(data.products);
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        setIsLoading(false);
+      });
   }, []);
 
   const filteredProducts =
@@ -233,9 +237,26 @@ export default function HomePage() {
 
         {/* Product Grid - Mobile Optimized */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          {filteredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+          {filteredProducts.length === 0 ? (
+            <div className="col-span-full py-16 text-center border border-dashed border-white/10 rounded-2xl bg-surface/40 p-8 space-y-4 font-mono">
+              <Box className="h-10 w-10 text-zinc-600 mx-auto" />
+              <div className="space-y-1">
+                <h3 className="text-sm font-bold text-white uppercase">No Active Drops Listed Yet</h3>
+                <p className="text-xs text-zinc-500 font-sans max-w-md mx-auto">
+                  Be the first creator to list physical cut-and-sew streetwear, turnkey SaaS platforms, or digital asset vaults.
+                </p>
+              </div>
+              <Link href="/seller/products/new">
+                <Button variant="outline" size="sm" className="font-mono text-xs">
+                  + LIST FIRST DROP ON AURAMINATOR
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            filteredProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))
+          )}
         </div>
       </section>
 

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Search, X, Sparkles, ArrowRight, ShieldCheck, Briefcase, Box, Code2, Globe } from "lucide-react";
-import { MOCK_PRODUCTS, MOCK_JOBS } from "@/lib/mock-data";
+import { Product, JobPosting } from "@/lib/types";
 import { formatINR } from "@/lib/utils";
 
 interface MobileSearchDrawerProps {
@@ -15,12 +15,29 @@ interface MobileSearchDrawerProps {
 export function MobileSearchDrawer({ isOpen, onClose }: MobileSearchDrawerProps) {
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [jobs, setJobs] = useState<JobPosting[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 150);
       document.body.style.overflow = "hidden";
+
+      // Fetch live products and jobs
+      fetch("/api/products")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.products) setProducts(data.products);
+        })
+        .catch(() => {});
+
+      fetch("/api/jobs")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.jobs) setJobs(data.jobs);
+        })
+        .catch(() => {});
     } else {
       document.body.style.overflow = "unset";
     }
@@ -34,7 +51,7 @@ export function MobileSearchDrawer({ isOpen, onClose }: MobileSearchDrawerProps)
   // Filter products & jobs based on query and active filter
   const cleanQ = query.toLowerCase().trim();
 
-  const filteredProducts = MOCK_PRODUCTS.filter((p) => {
+  const filteredProducts = products.filter((p) => {
     const matchesCategory =
       activeCategory === "all" ||
       (activeCategory === "saas" && ["saas", "app", "website"].includes(p.product_type)) ||
@@ -53,7 +70,7 @@ export function MobileSearchDrawer({ isOpen, onClose }: MobileSearchDrawerProps)
 
   const filteredJobs =
     activeCategory === "all" || activeCategory === "jobs"
-      ? MOCK_JOBS.filter(
+      ? jobs.filter(
           (j) =>
             !cleanQ ||
             j.title.toLowerCase().includes(cleanQ) ||

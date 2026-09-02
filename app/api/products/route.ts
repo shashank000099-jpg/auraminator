@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { Product } from "@/lib/types";
-import { MOCK_PRODUCTS } from "@/lib/mock-data";
 
 export async function GET(req: NextRequest) {
   try {
@@ -11,16 +10,23 @@ export async function GET(req: NextRequest) {
     const seller = searchParams.get("seller") || "";
 
     const supabase = createServerSupabase();
-    let { data: products, error } = await supabase
+    let query = supabase
       .from("products")
       .select("*, seller:profiles(*), variants:product_variants(*), digital_assets(*), external_vault_links(*)")
-      .eq("status", "published");
+      .eq("status", "published")
+      .order("created_at", { ascending: false });
 
-    if (error || !products || products.length === 0) {
-      products = MOCK_PRODUCTS as any;
+    if (type && type !== "all") {
+      query = query.eq("product_type", type);
     }
 
-    let filtered = [...(products as Product[])];
+    const { data: products, error } = await query;
+
+    if (error) {
+      return NextResponse.json({ products: [] });
+    }
+
+    let filtered = [...((products || []) as Product[])];
 
     if (search) {
       filtered = filtered.filter(
@@ -31,16 +37,12 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    if (type && type !== "all") {
-      filtered = filtered.filter((p) => p.product_type === type);
-    }
-
     if (seller) {
       filtered = filtered.filter((p) => p.seller?.username === seller || p.seller_id === seller);
     }
 
     return NextResponse.json({ products: filtered });
   } catch (err: any) {
-    return NextResponse.json({ products: MOCK_PRODUCTS });
+    return NextResponse.json({ products: [] });
   }
 }

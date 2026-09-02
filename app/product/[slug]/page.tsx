@@ -28,8 +28,9 @@ import {
   Server,
   Layers,
   X,
+  AlertCircle,
+  ArrowLeft,
 } from "lucide-react";
-import { MOCK_PRODUCTS } from "@/lib/mock-data";
 import { Product, ProductVariant } from "@/lib/types";
 import { formatINR } from "@/lib/utils";
 import { useCartStore } from "@/lib/store/cart-store";
@@ -38,12 +39,13 @@ import { Button } from "@/components/ui/button";
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const slug = (params?.slug as string) || "vortex-heavyweight-modular-hoodie";
+  const slug = (params?.slug as string) || "";
 
   const [product, setProduct] = useState<Product | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [selectedImage, setSelectedImage] = useState<string>("");
   const [activeTab, setActiveTab] = useState<"details" | "reviews" | "security">("details");
+  const [isLoading, setIsLoading] = useState(true);
 
   // Make an Offer Modal State
   const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
@@ -54,6 +56,8 @@ export default function ProductDetailPage() {
   const { addItem, openCart } = useCartStore();
 
   useEffect(() => {
+    if (!slug) return;
+    setIsLoading(true);
     fetch(`/api/products/${slug}`)
       .then((res) => res.json())
       .then((data) => {
@@ -66,26 +70,39 @@ export default function ProductDetailPage() {
           }
         }
       })
-      .catch(() => {
-        const mock = MOCK_PRODUCTS.find((p) => p.slug === slug || p.id === slug);
-        if (mock) {
-          setProduct(mock as any);
-          setSelectedImage(mock.thumbnail_url);
-          setOfferAmount(Math.round(mock.base_price * 0.9).toString());
-          if (mock.variants && mock.variants.length > 0) {
-            setSelectedVariant(mock.variants[0] as any);
-          }
-        }
+      .catch(() => {})
+      .finally(() => {
+        setIsLoading(false);
       });
   }, [slug]);
 
-  if (!product) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center font-mono text-xs">
         <div className="flex items-center gap-2">
           <div className="h-2 w-2 bg-white rounded-full animate-ping"></div>
           <span>INITIALIZING SECURE DROP VAULT...</span>
         </div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center font-mono text-xs p-6 space-y-4 text-center">
+        <AlertCircle className="h-10 w-10 text-zinc-600" />
+        <div className="space-y-1">
+          <h1 className="text-base font-bold text-white uppercase">Product / Drop Not Found</h1>
+          <p className="text-xs text-zinc-500 font-sans">
+            The requested listing does not exist or has been archived from the Auraminator vault.
+          </p>
+        </div>
+        <Link href="/explore">
+          <Button variant="outline" size="sm" className="flex items-center gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            <span>Return to Marketplace</span>
+          </Button>
+        </Link>
       </div>
     );
   }

@@ -20,29 +20,78 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MOCK_JOBS } from "@/lib/mock-data";
+import { JobPosting } from "@/lib/types";
 import { AuraminatorLogo, AuraminatorIcon } from "@/components/brand-logo";
 
 export default function JobDetailPage() {
   const params = useParams();
-  const jobId = (params?.id as string) || "job-001";
+  const jobId = (params?.id as string) || "";
 
-  const job = MOCK_JOBS.find((j) => j.id === jobId) || MOCK_JOBS[0];
+  const [job, setJob] = useState<JobPosting | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Application Form State
-  const [fullName, setFullName] = useState("Aarav Mehta");
-  const [email, setEmail] = useState("aarav.mehta@build.dev");
-  const [phone, setPhone] = useState("+91 98765 43210");
-  const [portfolioUrl, setPortfolioUrl] = useState("https://aaravmehta.dev");
-  const [githubUrl, setGithubUrl] = useState("https://github.com/aaravmehta");
-  const [resumeUrl, setResumeUrl] = useState("https://assets.auraminator.in/resumes/aarav-mehta-fullstack.pdf");
-  const [coverNote, setCoverNote] = useState(
-    "I have 5+ years of experience in high-performance Next.js architectures, Supabase PostgreSQL RLS policies, and real-time payment integrations. Excited to contribute to your core sovereign drops engine."
-  );
-  const [expectedSalary, setExpectedSalary] = useState("₹32,00,000 / year");
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [portfolioUrl, setPortfolioUrl] = useState("");
+  const [githubUrl, setGithubUrl] = useState("");
+  const [resumeUrl, setResumeUrl] = useState("");
+  const [coverNote, setCoverNote] = useState("");
+  const [expectedSalary, setExpectedSalary] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isApplied, setIsApplied] = useState(false);
+
+  React.useEffect(() => {
+    if (!jobId) return;
+    setIsLoading(true);
+    fetch("/api/jobs")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.jobs) {
+          const found = data.jobs.find((j: any) => j.id === jobId || j.slug === jobId);
+          if (found) {
+            setJob(found);
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [jobId]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center font-mono text-xs">
+        <div className="flex items-center gap-2">
+          <div className="h-2 w-2 bg-white rounded-full animate-ping"></div>
+          <span>RETRIEVING TECH CAREER LISTING...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!job) {
+    return (
+      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center font-mono text-xs p-6 space-y-4 text-center">
+        <Briefcase className="h-10 w-10 text-zinc-600" />
+        <div className="space-y-1">
+          <h1 className="text-base font-bold text-white uppercase">Job Listing Not Found</h1>
+          <p className="text-xs text-zinc-500 font-sans">
+            This job posting may have been fulfilled or closed by the hiring team.
+          </p>
+        </div>
+        <Link href="/jobs">
+          <Button variant="outline" size="sm" className="flex items-center gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            <span>Return to Job Board</span>
+          </Button>
+        </Link>
+      </div>
+    );
+  }
 
   const handleApply = async (e: React.FormEvent) => {
     e.preventDefault();

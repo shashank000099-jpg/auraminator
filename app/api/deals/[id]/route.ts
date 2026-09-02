@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
-import { MOCK_DEAL_ROOMS, MOCK_PRODUCTS } from "@/lib/mock-data";
 import { detectContactInformation } from "@/lib/anti-circumvention";
 import { EscrowStateMachine } from "@/lib/escrow-engine";
 
@@ -12,32 +11,27 @@ export async function GET(
 
   try {
     const supabase = createServerSupabase();
-    const { data: { session } } = await supabase.auth.getSession();
 
-    if (session?.user) {
-      const { data: deal, error } = await supabase
-        .from("deal_rooms")
-        .select(`
-          *,
-          product:products(*),
-          buyer:profiles!buyer_id(*),
-          seller:profiles!seller_id(*),
-          transfers:deal_transfers(*),
-          messages:deal_messages(*, sender:profiles!sender_id(*))
-        `)
-        .eq("id", dealId)
-        .single();
+    const { data: deal, error } = await supabase
+      .from("deal_rooms")
+      .select(`
+        *,
+        product:products(*),
+        buyer:profiles!buyer_id(*),
+        seller:profiles!seller_id(*),
+        transfers:deal_transfers(*),
+        messages:deal_messages(*, sender:profiles!sender_id(*))
+      `)
+      .eq("id", dealId)
+      .single();
 
-      if (!error && deal) {
-        return NextResponse.json({ success: true, deal });
-      }
+    if (!error && deal) {
+      return NextResponse.json({ success: true, deal });
     }
 
-    const mockDeal = MOCK_DEAL_ROOMS.find((d) => d.id === dealId) || MOCK_DEAL_ROOMS[0];
-    return NextResponse.json({ success: true, deal: mockDeal });
+    return NextResponse.json({ error: "Deal room not found" }, { status: 404 });
   } catch (err: any) {
-    const mockDeal = MOCK_DEAL_ROOMS.find((d) => d.id === dealId) || MOCK_DEAL_ROOMS[0];
-    return NextResponse.json({ success: true, deal: mockDeal });
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
 
@@ -50,8 +44,25 @@ export async function PATCH(
   try {
     const body = await request.json();
     const { action, payload } = body;
+    const supabase = createServerSupabase();
 
-    let deal = MOCK_DEAL_ROOMS.find((d) => d.id === dealId) || { ...MOCK_DEAL_ROOMS[0], id: dealId };
+    const { data: dbDeal } = await supabase
+      .from("deal_rooms")
+      .select("*, product:products(*), buyer:profiles!buyer_id(*), seller:profiles!seller_id(*)")
+      .eq("id", dealId)
+      .single();
+
+    let deal = dbDeal || {
+      id: dealId,
+      agreed_price: 100000,
+      platform_fee: 15000,
+      seller_payout: 85000,
+      escrow_status: "awaiting_deposit",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      messages: [],
+      transfers: [],
+    };
 
     switch (action) {
       case "counter_offer": {
@@ -165,7 +176,7 @@ export async function PATCH(
       case "verify_transfer_item": {
         deal = {
           ...deal,
-          transfers: (deal.transfers || []).map((t) =>
+          transfers: ((deal.transfers || []) as any[]).map((t: any) =>
             t.id === payload.transferId
               ? { ...t, verified_by_buyer: true, verified_at: new Date().toISOString() }
               : t

@@ -4,38 +4,27 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import { ProductCard } from "@/components/product-card";
-import { MOCK_PRODUCTS } from "@/lib/mock-data";
-import { CheckCircle2, Globe, Twitter, Instagram, ShieldCheck, Sparkles } from "lucide-react";
+import { CheckCircle2, Globe, Twitter, Instagram, ShieldCheck, Sparkles, Box } from "lucide-react";
 import { Product } from "@/lib/types";
 
 export default function CreatorStorefrontPage() {
   const params = useParams();
-  const username = (params?.username as string) || "kaizen";
+  const username = (params?.username as string) || "";
 
   const [products, setProducts] = useState<Product[]>([]);
-  const [sellerName, setSellerName] = useState("KAIZEN STUDIOS");
+  const [sellerName, setSellerName] = useState(username.toUpperCase());
 
   useEffect(() => {
+    if (!username) return;
     fetch(`/api/products?seller=${username}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.products && data.products.length > 0) {
           setProducts(data.products);
           setSellerName(data.products[0]?.seller?.full_name || username.toUpperCase());
-        } else {
-          // Fallback matching products
-          const matched = MOCK_PRODUCTS.filter(
-            (p) => p.seller?.username.toLowerCase() === username.toLowerCase()
-          );
-          setProducts(matched.length > 0 ? matched : MOCK_PRODUCTS.slice(0, 3));
-          if (matched.length > 0) {
-            setSellerName(matched[0].seller?.full_name || username.toUpperCase());
-          }
         }
       })
-      .catch(() => {
-        setProducts(MOCK_PRODUCTS.slice(0, 3));
-      });
+      .catch(() => {});
   }, [username]);
 
   return (
@@ -100,11 +89,21 @@ export default function CreatorStorefrontPage() {
             <span className="text-zinc-500">100% ESCROW PROTECTED</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          {products.length === 0 ? (
+            <div className="py-20 text-center border border-dashed border-white/10 rounded-2xl bg-surface/40 p-8 space-y-3 font-mono">
+              <Box className="h-8 w-8 text-zinc-600 mx-auto" />
+              <p className="text-sm font-bold text-white uppercase">No Active Drops by this Creator Yet</p>
+              <p className="text-xs text-zinc-500 font-sans">
+                Check back soon or explore verified drops across the Auraminator marketplace.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {products.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

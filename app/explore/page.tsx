@@ -3,7 +3,6 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ProductCard } from "@/components/product-card";
-import { MOCK_PRODUCTS } from "@/lib/mock-data";
 import { Search, SlidersHorizontal, ArrowUpDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Product } from "@/lib/types";
@@ -12,7 +11,7 @@ function ExploreContent() {
   const searchParams = useSearchParams();
   const initialType = searchParams.get("type") || "all";
 
-  const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
+  const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState(initialType);
   const [sortBy, setSortBy] = useState<"newest" | "price_asc" | "price_desc">("newest");
@@ -21,7 +20,7 @@ function ExploreContent() {
     fetch("/api/products")
       .then((res) => res.json())
       .then((data) => {
-        if (data.products && data.products.length > 0) {
+        if (data.products) {
           setProducts(data.products);
         }
       })

@@ -17,16 +17,15 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { MOCK_APPLICATIONS, MOCK_JOBS } from "@/lib/mock-data";
 import { JobApplication } from "@/lib/types";
 import { AuraminatorLogo, AuraminatorIcon } from "@/components/brand-logo";
 
 export default function RecruiterPipelinePage() {
-  const [applications, setApplications] = useState<JobApplication[]>(MOCK_APPLICATIONS);
-  const [selectedAppId, setSelectedAppId] = useState<string>("app-101");
+  const [applications, setApplications] = useState<JobApplication[]>([]);
+  const [selectedAppId, setSelectedAppId] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const selectedApp = applications.find((a) => a.id === selectedAppId) || applications[0];
+  const selectedApp = applications.find((a) => a.id === selectedAppId) || applications[0] || null;
 
   const handleUpdateStatus = (appId: string, newStatus: any) => {
     setApplications((prev) =>
@@ -92,7 +91,7 @@ export default function RecruiterPipelinePage() {
           </div>
           <div className="rounded-xl border border-border bg-surface p-4 space-y-1">
             <span className="text-[10px] text-zinc-500 uppercase">Active Posted Roles</span>
-            <p className="text-xl font-bold text-white">{MOCK_JOBS.length}</p>
+            <p className="text-xl font-bold text-white">0</p>
           </div>
         </div>
 
@@ -123,35 +122,45 @@ export default function RecruiterPipelinePage() {
             </div>
 
             <div className="space-y-3">
-              {filteredApps.map((app) => (
-                <div
-                  key={app.id}
-                  onClick={() => setSelectedAppId(app.id)}
-                  className={`rounded-xl border p-5 space-y-3 cursor-pointer transition-all ${
-                    selectedApp?.id === app.id
-                      ? "border-white bg-surface-elevated text-white shadow-lg"
-                      : "border-border bg-surface text-zinc-400 hover:border-zinc-700"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-bold text-white text-sm">{app.full_name}</h4>
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
-                        app.status === "shortlisted"
-                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                          : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-                      }`}
-                    >
-                      {app.status.replace("_", " ")}
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-zinc-400 font-sans line-clamp-1">{app.email}</p>
-                  <p className="text-[11px] text-zinc-500 font-mono">
-                    Expected: <strong className="text-white">{app.expected_salary || "Negotiable"}</strong>
+              {filteredApps.length === 0 ? (
+                <div className="py-12 text-center border border-dashed border-white/10 rounded-xl bg-surface/40 p-6 space-y-2 font-mono">
+                  <Users className="h-6 w-6 text-zinc-600 mx-auto" />
+                  <p className="text-xs font-bold text-white uppercase">No Applications Yet</p>
+                  <p className="text-[11px] text-zinc-500 font-sans">
+                    Applicants who apply to your active jobs will appear in this pipeline.
                   </p>
                 </div>
-              ))}
+              ) : (
+                filteredApps.map((app) => (
+                  <div
+                    key={app.id}
+                    onClick={() => setSelectedAppId(app.id)}
+                    className={`rounded-xl border p-5 space-y-3 cursor-pointer transition-all ${
+                      selectedApp?.id === app.id
+                        ? "border-white bg-surface-elevated text-white shadow-lg"
+                        : "border-border bg-surface text-zinc-400 hover:border-zinc-700"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-white text-sm">{app.full_name}</h4>
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
+                          app.status === "shortlisted"
+                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                            : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                        }`}
+                      >
+                        {app.status.replace("_", " ")}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-zinc-400 font-sans line-clamp-1">{app.email}</p>
+                    <p className="text-[11px] text-zinc-500 font-mono">
+                      Expected: <strong className="text-white">{app.expected_salary || "Negotiable"}</strong>
+                    </p>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
