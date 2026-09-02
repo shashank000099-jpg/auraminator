@@ -59,7 +59,14 @@ function LoginForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
+    if (!email.trim()) {
+      setErrorMessage("Please enter your email address.");
+      return;
+    }
+    if (!password) {
+      setErrorMessage("Please enter your password.");
+      return;
+    }
 
     setIsSubmitting(true);
     setErrorMessage("");
@@ -76,7 +83,7 @@ function LoginForm() {
     }
 
     try {
-      const res = await signIn(email, password || "password123");
+      const res = await signIn(email, password);
       if (res.success) {
         router.push(redirectUrl);
       } else {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createServerSupabase } from "@/lib/supabase/server";
 
 export async function POST(req: NextRequest) {
   try {
@@ -6,33 +7,33 @@ export async function POST(req: NextRequest) {
     const apiKey = process.env.GEMINI_API_KEY || process.env.AI_API_KEY;
 
     if (action === "generate_listing") {
-      const prompt = payload?.rawPrompt || "Brutalist Streetwear Drop";
-      const type = payload?.type || "digital_file";
+      const prompt = payload?.rawPrompt || "Modern Web Application";
+      const type = payload?.type || "saas";
 
       if (apiKey) {
         try {
-          const aiPrompt = `You are the lead product copywriter for Auraminator.in, an elite luxury tech, digital assets, SaaS, and cut-and-sew streetwear marketplace.
-Generate a high-converting listing for:
+          const aiPrompt = `You are the lead product architect and copywriter for Auraminator.in, a high-tier digital assets, SaaS, apps, and luxury streetwear marketplace.
+Generate a high-converting, professional listing for:
 - Asset/Product Prompt: "${prompt}"
 - Product Category: "${type}"
 
-Respond in pure valid JSON format with these exact keys:
+Respond strictly in valid JSON format with these exact keys:
 {
-  "title": "Bold luxury title with edition tag",
-  "description": "Engaging, high-converting product description (3-4 sentences)",
-  "tags": ["5-7 relevant tags"],
-  "suggested_price": 2499
+  "title": "Compelling professional title",
+  "description": "Engaging, high-converting product description (3-4 sentences highlighting technical specs and buyer benefits)",
+  "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
+  "suggested_price": 4999
 }
-Output only raw JSON without markdown backticks.`;
+Do not include markdown codeblocks, output only raw JSON.`;
 
           const res = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 contents: [{ parts: [{ text: aiPrompt }] }],
-                generationConfig: { temperature: 0.3, maxOutputTokens: 500 },
+                generationConfig: { temperature: 0.4, maxOutputTokens: 600 },
               }),
             }
           );
@@ -47,58 +48,42 @@ Output only raw JSON without markdown backticks.`;
               success: true,
               title: parsed.title,
               description: parsed.description,
-              tags: parsed.tags || ["curated", "auraminator", "exclusive-drop"],
+              tags: parsed.tags || ["auraminator", "verified-drop"],
               suggested_price: parsed.suggested_price || 2499,
             });
           }
-        } catch {}
+        } catch (aiErr) {
+          console.error("Gemini AI listing generation warning:", aiErr);
+        }
       }
 
-      // Fallback deterministic generator
-      let suggestedPrice = 799;
-      let title = `Elite ${prompt} [2026 Edition]`;
-      let description = `High-impact ${prompt} engineered for modern creators & tastemakers. Includes pristine modular source tokens, pre-compiled assets, responsive Figma variables, and instant vault access. Built for high-conversion drops.`;
-
-      if (type === "physical") {
-        suggestedPrice = 2499;
-        title = `Auraminator Heavyweight ${prompt} (500 GSM)`;
-        description = `Custom cut-and-sew heavyweight luxury apparel. Hand-distressed 500 GSM French Terry cotton with monochrome matte high-density silicon branding. Preshrunk, anti-pilling, tailored oversized brutalist fit. Ships via Express Courier with live tracking.`;
-      } else if (type === "digital_link") {
-        suggestedPrice = 1299;
-        title = `${prompt} • Master Workspace`;
-        description = `Full Notion / Figma creator workspace and operational templates. Includes automated workflows, brand guidelines, invoice generators, and client onboarding sequences with instant private link duplication.`;
-      } else if (type === "service") {
-        suggestedPrice = 14999;
-        title = `1-on-1 ${prompt} Architecture & Strategy`;
-        description = `Direct 1-on-1 strategy sprint, security review, and design system alignment with verified senior specialists. Delivered with complete architecture diagrams and action blueprint.`;
-      }
-
+      // Fallback
       return NextResponse.json({
         success: true,
-        title,
-        description,
-        tags: [
-          prompt.toLowerCase().replace(/\s+/g, "-"),
-          "curated",
-          "auraminator",
-          "brutalist",
-          "exclusive-drop",
-        ],
-        suggested_price: suggestedPrice,
+        title: `Auraminator Verified • ${prompt}`,
+        description: `High-impact ${prompt} engineered for modern creators & businesses. Includes complete technical assets, documentation, and 7-day escrow warranty protection.`,
+        tags: [prompt.toLowerCase().replace(/\s+/g, "-"), "auraminator", "verified-drop"],
+        suggested_price: type === "physical" ? 2499 : 4999,
       });
     }
 
     if (action === "seller_diagnostics") {
+      const supabase = createServerSupabase();
+      const { count: productCount } = await supabase.from("products").select("*", { count: "exact", head: true });
+      const { count: orderCount } = await supabase.from("orders").select("*", { count: "exact", head: true });
+
+      const insights = [
+        `Live Catalog: ${productCount || 0} active drops indexed on Auraminator.`,
+        `Orders Processed: ${orderCount || 0} transactions routed through 10-State Escrow FSM.`,
+        "Automated Google for Jobs & Rich Snippet SEO Schema is active across all published listings.",
+        "Zero-Trust Escrow protection is active with 7-Day Warranty hold enabled.",
+      ];
+
       return NextResponse.json({
         success: true,
-        insights: [
-          "Conversion rate increased 18% with active Gemini AI SEO Schema tags.",
-          "Real-time Escrow double-entry ledger is active with 0 pending disputes.",
-          "Top 15% of your buyers are purchasing within 3 minutes of drop announcements. WhatsApp notifications recommended.",
-          "Inventory for 'Heavyweight Drop Tee / XL' is below threshold (only 3 units left). Replenishment recommended before weekend traffic spike.",
-        ],
-        healthScore: 98,
-        projectedMonthlyGMV: 580000,
+        insights,
+        healthScore: 100,
+        projectedMonthlyGMV: (orderCount || 1) * 25000,
       });
     }
 

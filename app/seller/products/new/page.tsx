@@ -27,65 +27,96 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatINR } from "@/lib/utils";
 import { ProductType } from "@/lib/types";
+import { useAuth } from "@/lib/context/auth-context";
 
 export default function NewProductDropPage() {
   const router = useRouter();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
 
   // Product Fields
-  const [title, setTitle] = useState("VividAI • Automated Short-Form Video Generator SaaS");
+  const [title, setTitle] = useState("");
   const [productType, setProductType] = useState<ProductType>("saas");
-  const [basePrice, setBasePrice] = useState("450000");
-  const [description, setDescription] = useState(
-    "Turnkey B2B SaaS platform generating ₹48.5k verified MRR with 82% profit margins. Complete turnkey handover including domain, Stripe customers, and Next.js / FastAPI codebase."
-  );
-  const [thumbnailUrl, setThumbnailUrl] = useState(
-    "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80"
-  );
+  const [basePrice, setBasePrice] = useState("");
+  const [description, setDescription] = useState("");
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [videoPreviewUrl, setVideoPreviewUrl] = useState("");
   const [galleryUrls, setGalleryUrls] = useState("");
 
   // SaaS & Web Asset Specific Fields
-  const [assetMrr, setAssetMrr] = useState("48500");
-  const [assetArr, setAssetArr] = useState("582000");
-  const [assetNetProfit, setAssetNetProfit] = useState("39000");
-  const [assetDomain, setAssetDomain] = useState("vividai.tools");
-  const [assetMonthlyVisitors, setAssetMonthlyVisitors] = useState("34200");
-  const [assetTechStack, setAssetTechStack] = useState("Next.js 14, FastAPI, Replicate AI, Stripe, Supabase");
+  const [assetMrr, setAssetMrr] = useState("");
+  const [assetArr, setAssetArr] = useState("");
+  const [assetNetProfit, setAssetNetProfit] = useState("");
+  const [assetDomain, setAssetDomain] = useState("");
+  const [assetMonthlyVisitors, setAssetMonthlyVisitors] = useState("");
+  const [assetTechStack, setAssetTechStack] = useState("");
 
   // Mobile App Specific Fields
   const [appPlatform, setAppPlatform] = useState<"both" | "ios" | "android">("both");
-  const [appDownloads, setAppDownloads] = useState("65000");
+  const [appDownloads, setAppDownloads] = useState("");
 
   // Source Code Specific Fields
-  const [repoUrl, setRepoUrl] = useState("github.com/syntaxlabs/vividai");
+  const [repoUrl, setRepoUrl] = useState("");
   const [licenseType, setLicenseType] = useState<"exclusive_ip" | "commercial_source">("exclusive_ip");
 
   // Social Account Specific Fields
   const [socialPlatform, setSocialPlatform] = useState<"youtube" | "instagram" | "twitter_x" | "tiktok">("youtube");
-  const [socialHandle, setSocialHandle] = useState("@CodeVortexAI");
-  const [socialFollowers, setSocialFollowers] = useState("142000");
-  const [socialMonetized, setSocialMonetized] = useState(true);
+  const [socialHandle, setSocialHandle] = useState("");
+  const [socialFollowers, setSocialFollowers] = useState("");
+  const [socialMonetized, setSocialMonetized] = useState(false);
 
   // Service Specific Fields
-  const [serviceSlaDays, setServiceSlaDays] = useState("1");
+  const [serviceSlaDays, setServiceSlaDays] = useState("7");
 
   // Physical & Shiprocket Specific Fields (Only active for physical products!)
-  const [fabricGsm, setFabricGsm] = useState("500 GSM French Terry");
-  const [itemWeightGrams, setItemWeightGrams] = useState("850");
-  const [pickupNickname, setPickupNickname] = useState("Kaizen Central Logistics Hub");
-  const [pickupContact, setPickupContact] = useState("Kaizen Dispatch Lead");
-  const [pickupPhone, setPickupPhone] = useState("+91 9811002233");
-  const [pickupAddress, setPickupAddress] = useState("Plot 42, Okhla Industrial Area Phase 3");
-  const [pickupCity, setPickupCity] = useState("New Delhi");
-  const [pickupState, setPickupState] = useState("Delhi");
-  const [pickupPin, setPickupPin] = useState("110020");
-  const [packageLength, setPackageLength] = useState("30");
-  const [packageBreadth, setPackageBreadth] = useState("25");
-  const [packageHeight, setPackageHeight] = useState("12");
+  const [fabricGsm, setFabricGsm] = useState("");
+  const [itemWeightGrams, setItemWeightGrams] = useState("");
+  const [pickupNickname, setPickupNickname] = useState("");
+  const [pickupContact, setPickupContact] = useState("");
+  const [pickupPhone, setPickupPhone] = useState("");
+  const [pickupAddress, setPickupAddress] = useState("");
+  const [pickupCity, setPickupCity] = useState("");
+  const [pickupState, setPickupState] = useState("");
+  const [pickupPin, setPickupPin] = useState("");
+  const [packageLength, setPackageLength] = useState("");
+  const [packageBreadth, setPackageBreadth] = useState("");
+  const [packageHeight, setPackageHeight] = useState("");
 
   // Submitting
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center font-mono text-xs">
+        <span>VERIFYING CREATOR CREDENTIALS...</span>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-black text-white p-6 flex items-center justify-center font-mono">
+        <div className="max-w-md w-full rounded-2xl border border-white/10 bg-surface p-8 text-center space-y-6 brutalist-card">
+          <div className="h-12 w-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
+            <Lock className="h-6 w-6" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-extrabold uppercase tracking-tight text-white">
+              AUTHENTICATION REQUIRED
+            </h2>
+            <p className="text-xs text-zinc-400 font-sans">
+              Sign in or register an account before listing a new asset, SaaS, or drop on Auraminator.
+            </p>
+          </div>
+          <Link href="/auth/login?redirect=/seller/products/new">
+            <Button variant="primary" size="lg" className="w-full font-mono">
+              SIGN IN TO PUBLISH DROP
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const priceNum = parseFloat(basePrice) || 0;
   const platformFee = priceNum * 0.15; // 15% platform fee

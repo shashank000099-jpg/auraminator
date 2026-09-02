@@ -32,6 +32,8 @@ import { formatINR } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { AuraminatorLogo, AuraminatorIcon } from "@/components/brand-logo";
 
+import { createClientSupabase } from "@/lib/supabase/client";
+
 export default function AdminMissionControl() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<
@@ -40,141 +42,146 @@ export default function AdminMissionControl() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [adminEmail, setAdminEmail] = useState("");
 
-  // Master State for Seller KYC Approvals
-  const [kycRequests, setKycRequests] = useState([
-    {
-      id: "kyc-001",
-      business_name: "Apex Cybernetics Studio",
-      owner_name: "Vikram Malhotra",
-      email: "vikram@apexcyber.io",
-      category: "SaaS & AI Source Code",
-      tax_id: "27AABCA1234F1Z9",
-      bank_account: "HDFC •••• 9821",
-      submitted_at: "2 hours ago",
-      status: "pending",
-      portfolio_url: "https://apexcyber.io",
-    },
-    {
-      id: "kyc-002",
-      business_name: "Noir Atelier International",
-      owner_name: "Kabir Mehta",
-      email: "kabir@noiratelier.com",
-      category: "500 GSM Luxury Streetwear",
-      tax_id: "06AAACT9876C1Z2",
-      bank_account: "ICICI •••• 4410",
-      submitted_at: "5 hours ago",
-      status: "pending",
-      portfolio_url: "https://instagram.com/noiratelier",
-    },
-    {
-      id: "kyc-003",
-      business_name: "SyntaxLabs Dev Studio",
-      owner_name: "Rohan Verma",
-      email: "rohan@syntaxlabs.dev",
-      category: "Mobile Apps & Tech Sprints",
-      tax_id: "29BBBCB5678G2Z1",
-      bank_account: "Axis •••• 1102",
-      submitted_at: "1 day ago",
-      status: "pending",
-      portfolio_url: "https://github.com/syntaxlabs",
-    },
-  ]);
+  const [totalGMV, setTotalGMV] = useState(0);
+  const [platformProfit, setPlatformProfit] = useState(0);
+  const [escrowLockedFunds, setEscrowLockedFunds] = useState(0);
 
-  // Master State for Product & Asset Moderation
-  const [pendingProducts, setPendingProducts] = useState([
-    {
-      id: "prod-mod-001",
-      title: "PulseFit Pro - React Native & Node.js Health App",
-      seller: "SyntaxLabs Dev Studio",
-      type: "app",
-      price: 280000,
-      submitted_at: "3 hours ago",
-      status: "pending_review",
-      mrr: "₹38,000 MRR",
-    },
-    {
-      id: "prod-mod-002",
-      title: "Heavyweight Boxy Cut French Terry Tee (500 GSM)",
-      seller: "Noir Atelier International",
-      type: "physical",
-      price: 2499,
-      submitted_at: "6 hours ago",
-      status: "pending_review",
-      mrr: "Physical Drop",
-    },
-    {
-      id: "prod-mod-003",
-      title: "OmniScrape Cloud Web Automation Engine IP",
-      seller: "Apex Cybernetics Studio",
-      type: "source_code",
-      price: 150000,
-      submitted_at: "1 day ago",
-      status: "pending_review",
-      mrr: "Full IP Transfer",
-    },
-  ]);
+  // Live State for Seller KYC Approvals
+  const [kycRequests, setKycRequests] = useState<any[]>([]);
 
-  // Master State for Jobs Moderation
-  const [pendingJobs, setPendingJobs] = useState([
-    {
-      id: "job-mod-001",
-      title: "Lead AI Engineer (GenAI & Multimodal)",
-      company: "Apex Cybernetics Studio",
-      location: "Bangalore / Remote",
-      salary: "₹28,00,000 - ₹38,00,000 / yr",
-      submitted_at: "4 hours ago",
-      status: "pending_approval",
-    },
-    {
-      id: "job-mod-002",
-      title: "Luxury Apparel Tech & Pattern Master",
-      company: "Noir Atelier",
-      location: "Delhi NCR",
-      salary: "₹12,00,000 - ₹18,00,000 / yr",
-      submitted_at: "12 hours ago",
-      status: "pending_approval",
-    },
-  ]);
+  // Live State for Product & Asset Moderation
+  const [pendingProducts, setPendingProducts] = useState<any[]>([]);
 
-  // Master State for Active Escrow Deal Rooms
-  const [activeDeals, setActiveDeals] = useState([
-    {
-      id: "deal-001",
-      title: "VividAI SaaS Platform (Next.js 14 + Stripe)",
-      buyer: "Alex Mercer",
-      seller: "SyntaxLabs",
-      dealPrice: 450000,
-      sellerPayout: 382500,
-      platformFee: 67500,
-      status: "credentials_transferred",
-      inspectionLeft: "34 Hours Remaining",
-      disputeRaised: false,
-    },
-    {
-      id: "deal-002",
-      title: "Monetized 142k YouTube Tech Channel",
-      buyer: "Rahul Singhania",
-      seller: "KAIZEN STUDIOS",
-      dealPrice: 195000,
-      sellerPayout: 165750,
-      platformFee: 29250,
-      status: "buyer_inspecting",
-      inspectionLeft: "18 Hours Remaining",
-      disputeRaised: true,
-      disputeReason: "Buyer requested verification of AdSense primary ownership transfer",
-    },
-  ]);
+  // Live State for Jobs Moderation
+  const [pendingJobs, setPendingJobs] = useState<any[]>([]);
 
-  // Check Admin Authentication
+  // Live State for Active Escrow Deal Rooms
+  const [activeDeals, setActiveDeals] = useState<any[]>([]);
+
+  // Check Admin Authentication & Load Live DB Data
   useEffect(() => {
     const isAuth = localStorage.getItem("auraminator_admin_authenticated");
     const email = localStorage.getItem("auraminator_admin_email") || "shashank000099@gmail.com";
     if (isAuth !== "true") {
       router.push("/admin/login");
-    } else {
-      setIsAuthenticated(true);
-      setAdminEmail(email);
+      return;
     }
+
+    setIsAuthenticated(true);
+    setAdminEmail(email);
+
+    const supabase = createClientSupabase();
+
+    // 1. Fetch live Seller KYC Submissions
+    supabase
+      .from("seller_onboarding")
+      .select("*, seller:profiles(*)")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (data) {
+          setKycRequests(
+            data.map((k: any) => ({
+              id: k.id,
+              seller_id: k.seller_id,
+              business_name: k.legal_business_name,
+              owner_name: k.seller?.full_name || "Creator",
+              email: k.seller?.username ? `${k.seller.username}@auraminator.in` : "seller@auraminator.in",
+              category: "Verified Seller KYC",
+              tax_id: k.tax_identifier || "SUBMITTED",
+              bank_account: k.bank_details?.account_number ? `•••• ${k.bank_details.account_number.slice(-4)}` : "Verified",
+              submitted_at: new Date(k.created_at || Date.now()).toLocaleDateString(),
+              status: k.verification_status || "pending",
+              portfolio_url: k.document_urls?.[0] || "#",
+            }))
+          );
+        }
+      });
+
+    // 2. Fetch live Products for Moderation
+    supabase
+      .from("products")
+      .select("*, seller:profiles(*)")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (data) {
+          setPendingProducts(
+            data.map((p: any) => ({
+              id: p.id,
+              title: p.title,
+              seller: p.seller?.full_name || p.seller?.username || "Verified Seller",
+              type: p.product_type,
+              price: p.base_price,
+              submitted_at: new Date(p.created_at || Date.now()).toLocaleDateString(),
+              status: p.status,
+              mrr: p.product_type === "physical" ? "Physical Apparel" : "Turnkey Asset",
+            }))
+          );
+        }
+      });
+
+    // 3. Fetch live Jobs for Moderation
+    supabase
+      .from("jobs")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (data) {
+          setPendingJobs(
+            data.map((j: any) => ({
+              id: j.id,
+              title: j.title,
+              company: j.company_name,
+              location: j.location,
+              salary: j.salary_range,
+              submitted_at: new Date(j.created_at || Date.now()).toLocaleDateString(),
+              status: j.status,
+            }))
+          );
+        }
+      });
+
+    // 4. Fetch live Deal Rooms & Disputes
+    supabase
+      .from("deal_rooms")
+      .select("*, product:products(*), buyer:profiles!buyer_id(*), seller:profiles!seller_id(*)")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (data) {
+          let locked = 0;
+          const mapped = data.map((d: any) => {
+            if (d.escrow_status === "escrow_locked" || d.escrow_status === "buyer_inspecting") {
+              locked += d.agreed_price || 0;
+            }
+            return {
+              id: d.id,
+              title: d.product?.title || "Asset Deal Room",
+              buyer: d.buyer?.full_name || d.buyer?.username || "Buyer",
+              seller: d.seller?.full_name || d.seller?.username || "Seller",
+              dealPrice: d.agreed_price,
+              sellerPayout: d.seller_payout,
+              platformFee: d.platform_fee,
+              status: d.escrow_status,
+              inspectionLeft: "7-Day Warranty Period Active",
+              disputeRaised: d.escrow_status === "disputed",
+              disputeReason: d.dispute_reason || "Escrow Dispute Review",
+            };
+          });
+          setActiveDeals(mapped);
+          setEscrowLockedFunds(locked);
+        }
+      });
+
+    // 5. Fetch live Orders and calculate real GMV & Profit
+    supabase
+      .from("orders")
+      .select("total_amount, status")
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          const gmv = data.reduce((acc: number, curr: any) => acc + (curr.total_amount || 0), 0);
+          setTotalGMV(gmv);
+          setPlatformProfit(Math.round(gmv * 0.15));
+        }
+      });
   }, [router]);
 
   const handleLogout = () => {
@@ -183,44 +190,62 @@ export default function AdminMissionControl() {
     router.push("/admin/login");
   };
 
-  // Actions
-  const handleApproveSeller = (id: string, name: string) => {
-    setKycRequests((prev) => prev.filter((k) => k.id !== id));
-    alert(`✅ SUCCESS: Seller "${name}" KYC Approved! Store publishing & payout permissions unlocked.`);
+  // Real Database Actions
+  const handleApproveSeller = async (id: string, name: string) => {
+    const supabase = createClientSupabase();
+    const item = kycRequests.find((k) => k.id === id);
+    await supabase.from("seller_onboarding").update({ verification_status: "approved" }).eq("id", id);
+    if (item?.seller_id) {
+      await supabase.from("profiles").update({ is_verified: true, role: "seller" }).eq("id", item.seller_id);
+    }
+    setKycRequests((prev) => prev.map((k) => (k.id === id ? { ...k, status: "approved" } : k)));
+    alert(`✅ SUCCESS: Seller "${name}" KYC Approved in live Supabase database!`);
   };
 
-  const handleRejectSeller = (id: string, name: string) => {
+  const handleRejectSeller = async (id: string, name: string) => {
+    const supabase = createClientSupabase();
+    await supabase.from("seller_onboarding").update({ verification_status: "rejected" }).eq("id", id);
     setKycRequests((prev) => prev.filter((k) => k.id !== id));
     alert(`❌ Seller "${name}" application rejected.`);
   };
 
-  const handleApproveProduct = (id: string, title: string) => {
+  const handleApproveProduct = async (id: string, title: string) => {
+    const supabase = createClientSupabase();
+    await supabase.from("products").update({ status: "published" }).eq("id", id);
+    setPendingProducts((prev) => prev.map((p) => (p.id === id ? { ...p, status: "published" } : p)));
+    alert(`✅ SUCCESS: Listing "${title}" Published live to marketplace!`);
+  };
+
+  const handleRejectProduct = async (id: string, title: string) => {
+    const supabase = createClientSupabase();
+    await supabase.from("products").update({ status: "draft" }).eq("id", id);
     setPendingProducts((prev) => prev.filter((p) => p.id !== id));
-    alert(`✅ SUCCESS: Listing "${title}" Approved and Published live to marketplace with Gemini AI SEO.`);
+    alert(`❌ Listing "${title}" unlisted.`);
   };
 
-  const handleRejectProduct = (id: string, title: string) => {
-    setPendingProducts((prev) => prev.filter((p) => p.id !== id));
-    alert(`❌ Listing "${title}" flagged for revisions.`);
+  const handleApproveJob = async (id: string, title: string) => {
+    const supabase = createClientSupabase();
+    await supabase.from("jobs").update({ status: "published" }).eq("id", id);
+    setPendingJobs((prev) => prev.map((j) => (j.id === id ? { ...j, status: "published" } : j)));
+    alert(`✅ SUCCESS: Career Posting "${title}" Published to live Job Board!`);
   };
 
-  const handleApproveJob = (id: string, title: string) => {
-    setPendingJobs((prev) => prev.filter((j) => j.id !== id));
-    alert(`✅ SUCCESS: Career Posting "${title}" Approved and Published to Google for Jobs board.`);
-  };
-
-  const handleTribunalReleaseToSeller = (dealId: string) => {
+  const handleTribunalReleaseToSeller = async (dealId: string) => {
+    const supabase = createClientSupabase();
+    await supabase.from("deal_rooms").update({ escrow_status: "completed_paid" }).eq("id", dealId);
     setActiveDeals((prev) =>
       prev.map((d) => (d.id === dealId ? { ...d, status: "completed_paid", disputeRaised: false } : d))
     );
-    alert(`⚖️ TRIBUNAL OVERRIDE: Escrow funds released to Seller (85% net transferred via Razorpay Route).`);
+    alert(`⚖️ TRIBUNAL OVERRIDE: Escrow funds released to Seller (85% net payout settled).`);
   };
 
-  const handleTribunalRefundToBuyer = (dealId: string) => {
+  const handleTribunalRefundToBuyer = async (dealId: string) => {
+    const supabase = createClientSupabase();
+    await supabase.from("deal_rooms").update({ escrow_status: "refunded" }).eq("id", dealId);
     setActiveDeals((prev) =>
       prev.map((d) => (d.id === dealId ? { ...d, status: "refunded", disputeRaised: false } : d))
     );
-    alert(`⚖️ TRIBUNAL OVERRIDE: Full deal deposit refunded from Escrow vault to Buyer.`);
+    alert(`⚖️ TRIBUNAL OVERRIDE: Full deal deposit refunded from Escrow to Buyer.`);
   };
 
   if (!isAuthenticated) return null;
@@ -265,20 +290,20 @@ export default function AdminMissionControl() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           <div className="rounded-xl border border-white/15 bg-zinc-950 p-5 brutalist-card space-y-1">
             <span className="text-[11px] text-zinc-500 uppercase font-bold">Total Platform GMV</span>
-            <h2 className="text-2xl font-black text-white">{formatINR(1840000)}</h2>
-            <p className="text-[10px] text-emerald-400">+24.5% Past 30 Days</p>
+            <h2 className="text-2xl font-black text-white">{formatINR(totalGMV)}</h2>
+            <p className="text-[10px] text-emerald-400">Live Completed Settlements</p>
           </div>
 
           <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-5 brutalist-card space-y-1">
             <span className="text-[11px] text-emerald-400 uppercase font-bold">15% Platform Profit</span>
-            <h2 className="text-2xl font-black text-emerald-400">{formatINR(276000)}</h2>
+            <h2 className="text-2xl font-black text-emerald-400">{formatINR(platformProfit)}</h2>
             <p className="text-[10px] text-zinc-400">Net Retained Commission</p>
           </div>
 
           <div className="rounded-xl border border-white/15 bg-zinc-950 p-5 brutalist-card space-y-1">
             <span className="text-[11px] text-zinc-500 uppercase font-bold">Escrow Locked Funds</span>
-            <h2 className="text-2xl font-black text-white">{formatINR(580000)}</h2>
-            <p className="text-[10px] text-amber-400">Held in 48h Inspection Enclave</p>
+            <h2 className="text-2xl font-black text-white">{formatINR(escrowLockedFunds)}</h2>
+            <p className="text-[10px] text-amber-400">Held in 7-Day Warranty Enclave</p>
           </div>
 
           <div className="rounded-xl border border-white/15 bg-zinc-950 p-5 brutalist-card space-y-1">

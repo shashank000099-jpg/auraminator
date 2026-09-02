@@ -19,12 +19,15 @@ import { Button } from "@/components/ui/button";
 import { AICopilotModal } from "@/components/ai-copilot-modal";
 import { AuraminatorIcon, AuraminatorLogo } from "@/components/brand-logo";
 
+import { useAuth } from "@/lib/context/auth-context";
+
 export default function SellerDashboardPage() {
+  const { user, isLoading: isAuthLoading } = useAuth();
   const [analytics, setAnalytics] = useState<any>({
-    pendingEscrow: 48200,
-    availableBalance: 124500,
-    totalLifetimeEarnings: 684000,
-    totalOrders: 142,
+    pendingEscrow: 0,
+    availableBalance: 0,
+    totalLifetimeEarnings: 0,
+    totalOrders: 0,
     activeDisputes: 0,
   });
 
@@ -33,15 +36,57 @@ export default function SellerDashboardPage() {
   const [dispatchedOrders, setDispatchedOrders] = useState<string[]>([]);
 
   useEffect(() => {
-    fetch("/api/seller/analytics")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data && data.pendingEscrow !== undefined) {
-          setAnalytics(data);
-        }
-      })
-      .catch(() => {});
-  }, []);
+    if (user) {
+      fetch("/api/seller/analytics")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.pendingEscrow !== undefined) {
+            setAnalytics(data);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [user]);
+
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center font-mono text-xs">
+        <span>LOADING SELLER STUDIO...</span>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-black text-white p-6 flex items-center justify-center font-mono">
+        <div className="max-w-md w-full rounded-2xl border border-white/10 bg-surface p-8 text-center space-y-6 brutalist-card">
+          <div className="h-12 w-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
+            <ShieldCheck className="h-6 w-6" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-extrabold uppercase tracking-tight text-white">
+              SELLER STUDIO AUTHENTICATION
+            </h2>
+            <p className="text-xs text-zinc-400 font-sans">
+              Sign in to manage your inventory, live drop analytics, escrow releases, and courier dispatch.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2.5">
+            <Link href="/auth/login?redirect=/seller/dashboard">
+              <Button variant="primary" size="lg" className="w-full font-mono">
+                SIGN IN AS SELLER
+              </Button>
+            </Link>
+            <Link href="/seller/onboarding">
+              <Button variant="outline" size="sm" className="w-full font-mono text-zinc-400 hover:text-white">
+                Apply for Creator KYC
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleShiprocketDispatch = async (orderId: string) => {
     setDispatchingOrderId(orderId);
@@ -51,7 +96,7 @@ export default function SellerDashboardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           orderId,
-          sellerId: "seller-001",
+          sellerId: user.id,
           pickupLocation: "Primary Studio Warehouse",
         }),
       });
@@ -74,7 +119,7 @@ export default function SellerDashboardPage() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-surface px-3 py-1 text-[11px] text-zinc-300 mb-2">
               <AuraminatorIcon size={14} />
-              <span>KAIZEN STUDIOS • VERIFIED CREATOR STUDIO</span>
+              <span>{user.fullName.toUpperCase()} • {user.role === "seller" ? "VERIFIED SELLER" : "CREATOR WORKSPACE"}</span>
             </div>
             <h1 className="text-3xl font-extrabold uppercase tracking-tight text-white">
               SELLER STUDIO MISSION CONTROL

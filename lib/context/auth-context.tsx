@@ -34,37 +34,69 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const supabase = createClientSupabase();
 
+  const fetchProfileAndSetUser = async (authUser: any) => {
+    try {
+      const { data: dbProfile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", authUser.id)
+        .single();
+
+      const userMeta = authUser.user_metadata || {};
+      const sessionUser: UserSession = {
+        id: authUser.id,
+        email: authUser.email || "",
+        fullName: dbProfile?.full_name || userMeta.full_name || (authUser.email ? authUser.email.split("@")[0] : "Member"),
+        username: dbProfile?.username || userMeta.username || (authUser.email ? authUser.email.split("@")[0] : "user"),
+        role: dbProfile?.role || userMeta.role || "buyer",
+        isVerified: dbProfile?.is_verified ?? (userMeta.role === "seller" ? false : true),
+        avatarUrl: dbProfile?.avatar_url || userMeta.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
+      };
+
+      setUser(sessionUser);
+      setProfile(dbProfile || null);
+      localStorage.setItem("auraminator_user_session", JSON.stringify(sessionUser));
+      return sessionUser;
+    } catch {
+      const userMeta = authUser.user_metadata || {};
+      const fallbackSessionUser: UserSession = {
+        id: authUser.id,
+        email: authUser.email || "",
+        fullName: userMeta.full_name || (authUser.email ? authUser.email.split("@")[0] : "Member"),
+        username: userMeta.username || (authUser.email ? authUser.email.split("@")[0] : "user"),
+        role: userMeta.role || "buyer",
+        isVerified: userMeta.role === "seller" ? false : true,
+        avatarUrl: userMeta.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
+      };
+      setUser(fallbackSessionUser);
+      localStorage.setItem("auraminator_user_session", JSON.stringify(fallbackSessionUser));
+      return fallbackSessionUser;
+    }
+  };
+
   useEffect(() => {
-    // 1. Check local storage session first for instant responsiveness
+    // 1. Check local storage cache for instant UI responsiveness
     try {
       const savedUser = localStorage.getItem("auraminator_user_session");
       if (savedUser) {
-        const parsed = JSON.parse(savedUser);
-        setUser(parsed);
+        setUser(JSON.parse(savedUser));
       }
     } catch {}
 
-    // 2. Check Supabase Auth
+    // 2. Validate live Supabase session
     const checkSupabaseAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          const u = session.user;
-          const userMeta = u.user_metadata || {};
-          const sessionUser: UserSession = {
-            id: u.id,
-            email: u.email || "",
-            fullName: userMeta.full_name || "Sovereign Member",
-            username: userMeta.username || (u.email ? u.email.split("@")[0] : "user"),
-            role: userMeta.role || "buyer",
-            isVerified: !!userMeta.is_verified,
-            avatarUrl: userMeta.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
-          };
-          setUser(sessionUser);
-          localStorage.setItem("auraminator_user_session", JSON.stringify(sessionUser));
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (session?.user && !error) {
+          await fetchProfileAndSetUser(session.user);
+        } else {
+          // If no active supabase session, clear local storage
+          setUser(null);
+          setProfile(null);
+          localStorage.removeItem("auraminator_user_session");
         }
       } catch {
-        // Live Supabase not connected or placeholder key
+        // Network or offline
       } finally {
         setIsLoading(false);
       }
@@ -72,24 +104,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     checkSupabaseAuth();
 
-    // Listen for auth state changes
+    // 3. Listen for auth state changes in real-time
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
-        const u = session.user;
-        const userMeta = u.user_metadata || {};
-        const sessionUser: UserSession = {
-          id: u.id,
-          email: u.email || "",
-          fullName: userMeta.full_name || "Sovereign Member",
-          username: userMeta.username || (u.email ? u.email.split("@")[0] : "user"),
-          role: userMeta.role || "buyer",
-          isVerified: !!userMeta.is_verified,
-          avatarUrl: userMeta.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
-        };
-        setUser(sessionUser);
-        localStorage.setItem("auraminator_user_session", JSON.stringify(sessionUser));
+        await fetchProfileAndSetUser(session.user);
       } else if (event === "SIGNED_OUT") {
         setUser(null);
+        setProfile(null);
         localStorage.removeItem("auraminator_user_session");
       }
     });
@@ -102,67 +123,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password?: string) => {
     setIsLoading(true);
     try {
-      if (password) {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) {
-          // If supabase fails (e.g. placeholder env), check local mock auth fallback
-          if (email.includes("seller") || email.includes("kaizen")) {
-            const mockSeller: UserSession = {
-              id: "seller-001",
-              email,
-              fullName: "KAIZEN STUDIOS",
-              username: "kaizen",
-              role: "seller",
-              isVerified: true,
-              avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
-            };
-            setUser(mockSeller);
-            localStorage.setItem("auraminator_user_session", JSON.stringify(mockSeller));
-            return { success: true };
-          } else {
-            const mockBuyer: UserSession = {
-              id: "buyer-001",
-              email,
-              fullName: email.split("@")[0].toUpperCase(),
-              username: email.split("@")[0],
-              role: "buyer",
-              isVerified: true,
-              avatarUrl: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
-            };
-            setUser(mockBuyer);
-            localStorage.setItem("auraminator_user_session", JSON.stringify(mockBuyer));
-            return { success: true };
-          }
-        }
-        if (data.user) {
-          const userMeta = data.user.user_metadata || {};
-          const sessionUser: UserSession = {
-            id: data.user.id,
-            email: data.user.email || email,
-            fullName: userMeta.full_name || email.split("@")[0],
-            username: userMeta.username || email.split("@")[0],
-            role: userMeta.role || "buyer",
-            isVerified: !!userMeta.is_verified,
-            avatarUrl: userMeta.avatar_url,
-          };
-          setUser(sessionUser);
-          localStorage.setItem("auraminator_user_session", JSON.stringify(sessionUser));
-          return { success: true };
-        }
+      if (!password) {
+        return { success: false, error: "Password is required." };
       }
 
-      // Default mock login fallback
-      const fallbackUser: UserSession = {
-        id: `user_${Date.now()}`,
-        email,
-        fullName: email.split("@")[0].toUpperCase(),
-        username: email.split("@")[0],
-        role: "buyer",
-        isVerified: true,
-        avatarUrl: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
-      };
-      setUser(fallbackUser);
-      localStorage.setItem("auraminator_user_session", JSON.stringify(fallbackUser));
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+      if (error) {
+        return { success: false, error: error.message || "Invalid email or password." };
+      }
+
+      if (!data?.user) {
+        return { success: false, error: "Authentication failed. No user found." };
+      }
+
+      await fetchProfileAndSetUser(data.user);
       return { success: true };
     } catch (err: any) {
       return { success: false, error: err.message || "Failed to sign in" };
@@ -171,16 +149,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signUp = async (email: string, password: string, fullName: string, role: "buyer" | "seller" = "buyer") => {
+  const signUp = async (
+    email: string,
+    password: string,
+    fullName: string,
+    role: "buyer" | "seller" = "buyer"
+  ) => {
     setIsLoading(true);
     try {
-      const username = email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+      const trimmedEmail = email.trim();
+      const username = trimmedEmail.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: trimmedEmail,
         password,
         options: {
           data: {
-            full_name: fullName,
+            full_name: fullName.trim(),
             username,
             role,
             is_verified: role === "seller" ? false : true,
@@ -188,18 +173,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
       });
 
-      const sessionUser: UserSession = {
-        id: data?.user?.id || `usr_${Date.now()}`,
-        email,
-        fullName,
-        username,
-        role,
-        isVerified: role === "seller" ? false : true,
-        avatarUrl: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
-      };
+      if (error) {
+        return { success: false, error: error.message || "Registration failed." };
+      }
 
-      setUser(sessionUser);
-      localStorage.setItem("auraminator_user_session", JSON.stringify(sessionUser));
+      if (!data?.user) {
+        return { success: false, error: "Unable to create account. Please try again." };
+      }
+
+      // Upsert profile into public.profiles table
+      try {
+        await supabase.from("profiles").upsert({
+          id: data.user.id,
+          full_name: fullName.trim(),
+          username,
+          role,
+          is_verified: role === "seller" ? false : true,
+          updated_at: new Date().toISOString(),
+        });
+      } catch (profileErr) {
+        console.warn("Profile sync warning:", profileErr);
+      }
+
+      await fetchProfileAndSetUser(data.user);
       return { success: true };
     } catch (err: any) {
       return { success: false, error: err.message || "Sign up failed" };
@@ -220,19 +216,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (error) {
-        // Fallback preview login for development/preview mode
-        const googleUser: UserSession = {
-          id: `google_${Date.now()}`,
-          email: "alex.google@auraminator.in",
-          fullName: "Alex Google Member",
-          username: "alexgoogle",
-          role: "buyer",
-          isVerified: true,
-          avatarUrl: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
-        };
-        setUser(googleUser);
-        localStorage.setItem("auraminator_user_session", JSON.stringify(googleUser));
-        return { success: true };
+        return { success: false, error: error.message || "Google OAuth initialization failed." };
       }
       return { success: true };
     } catch (err: any) {
@@ -247,6 +231,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await supabase.auth.signOut();
     } catch {}
     setUser(null);
+    setProfile(null);
     localStorage.removeItem("auraminator_user_session");
   };
 

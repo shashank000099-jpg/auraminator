@@ -5,18 +5,56 @@ export async function GET(req: NextRequest) {
   try {
     const supabase = createServerSupabase();
     const { data: { user } } = await supabase.auth.getUser();
-    const sellerId = user?.id || "seller-001";
+    
+    if (!user) {
+      return NextResponse.json({
+        pendingEscrow: 0,
+        availableBalance: 0,
+        totalLifetimeEarnings: 0,
+        totalOrders: 0,
+        activeDisputes: 0,
+        ledger: [],
+      });
+    }
 
+    const sellerId = user.id;
+
+    // 1. Fetch real ledger entries
     const { data: ledgerEntries } = await supabase
       .from("ledger_entries")
       .select("*")
       .eq("seller_id", sellerId)
       .order("created_at", { ascending: false });
 
-    // Calculate balances
+    // 2. Fetch real products and orders count
+    const { count: productsCount } = await supabase
+      .from("products")
+      .select("*", { count: "exact", head: true })
+      .eq("seller_id", sellerId);
+
+    const { data: dealRooms } = await supabase
+      .from("deal_rooms")
+      .select("agreed_price, seller_payout, escrow_status")
+      .eq("seller_id", sellerId);
+
+    // Calculate live balances
     let pendingEscrow = 0;
     let availableBalance = 0;
     let totalLifetimeEarnings = 0;
+    let activeDisputes = 0;
+
+    if (dealRooms && dealRooms.length > 0) {
+      for (const deal of dealRooms) {
+        if (deal.escrow_status === "escrow_locked" || deal.escrow_status === "buyer_inspecting") {
+          pendingEscrow += deal.seller_payout || 0;
+        } else if (deal.escrow_status === "completed_paid") {
+          availableBalance += deal.seller_payout || 0;
+          totalLifetimeEarnings += deal.seller_payout || 0;
+        } else if (deal.escrow_status === "disputed") {
+          activeDisputes += 1;
+        }
+      }
+    }
 
     if (ledgerEntries && ledgerEntries.length > 0) {
       for (const entry of ledgerEntries) {
@@ -27,49 +65,16 @@ export async function GET(req: NextRequest) {
           if (entry.entry_type === "escrow_release") availableBalance += amt;
           if (entry.entry_type === "debit_payout") availableBalance -= amt;
         }
-        if (entry.entry_type === "credit_escrow" || entry.entry_type === "escrow_release") {
-          totalLifetimeEarnings += amt;
-        }
       }
-    } else {
-      // Demo analytics for seller preview
-      pendingEscrow = 48200;
-      availableBalance = 124500;
-      totalLifetimeEarnings = 684000;
     }
 
     return NextResponse.json({
       pendingEscrow,
       availableBalance,
       totalLifetimeEarnings,
-      totalOrders: 142,
-      activeDisputes: 0,
-      ledger: ledgerEntries || [
-        {
-          id: "led-01",
-          entry_type: "credit_escrow",
-          amount: 3324,
-          balance_type: "pending",
-          description: "Escrow hold for Order #ORD-98214 (Vortex Hoodie)",
-          created_at: new Date(Date.now() - 3600000).toISOString(),
-        },
-        {
-          id: "led-02",
-          entry_type: "escrow_release",
-          amount: 7990,
-          balance_type: "available",
-          description: "Escrow released for Order #ORD-97810 (Delivered)",
-          created_at: new Date(Date.now() - 86400000).toISOString(),
-        },
-        {
-          id: "led-03",
-          entry_type: "debit_payout",
-          amount: 50000,
-          balance_type: "available",
-          description: "Weekly payout transfer to HDFC Bank (**** 4891)",
-          created_at: new Date(Date.now() - 259200000).toISOString(),
-        },
-      ],
+      totalOrders: dealRooms?.length || 0,
+      activeDisputes,
+      ledger: ledgerEntries || [],
     });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });

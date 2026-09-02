@@ -7,24 +7,63 @@ import { Plus, ArrowLeft, MoreHorizontal, Edit, Trash2, CheckCircle2, Box, Downl
 import { formatINR } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Product } from "@/lib/types";
+import { useAuth } from "@/lib/context/auth-context";
 
 export default function SellerProductsPage() {
+  const { user, isLoading: isAuthLoading } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/seller/products")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.products) {
-          setProducts(data.products);
-        }
-      })
-      .catch(() => {})
-      .finally(() => {
-        setIsLoading(false);
-      });
-  }, []);
+    if (user) {
+      fetch("/api/seller/products")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.products) {
+            setProducts(data.products);
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          setIsLoading(false);
+        });
+    } else {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center font-mono text-xs">
+        <span>LOADING PRODUCTS...</span>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-black text-white p-6 flex items-center justify-center font-mono">
+        <div className="max-w-md w-full rounded-2xl border border-white/10 bg-surface p-8 text-center space-y-6 brutalist-card">
+          <div className="h-12 w-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
+            <Box className="h-6 w-6" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-extrabold uppercase tracking-tight text-white">
+              AUTHENTICATION REQUIRED
+            </h2>
+            <p className="text-xs text-zinc-400 font-sans">
+              Sign in to manage and edit your published drop inventory.
+            </p>
+          </div>
+          <Link href="/auth/login?redirect=/seller/products">
+            <Button variant="primary" size="lg" className="w-full font-mono">
+              SIGN IN AS SELLER
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black text-white p-4 sm:p-8 font-mono">
