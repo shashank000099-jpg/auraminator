@@ -70,9 +70,19 @@ export default function NewProductDropPage() {
   // Service Specific Fields
   const [serviceSlaDays, setServiceSlaDays] = useState("1");
 
-  // Physical Specific Fields
+  // Physical & Shiprocket Specific Fields (Only active for physical products!)
   const [fabricGsm, setFabricGsm] = useState("500 GSM French Terry");
   const [itemWeightGrams, setItemWeightGrams] = useState("850");
+  const [pickupNickname, setPickupNickname] = useState("Kaizen Central Logistics Hub");
+  const [pickupContact, setPickupContact] = useState("Kaizen Dispatch Lead");
+  const [pickupPhone, setPickupPhone] = useState("+91 9811002233");
+  const [pickupAddress, setPickupAddress] = useState("Plot 42, Okhla Industrial Area Phase 3");
+  const [pickupCity, setPickupCity] = useState("New Delhi");
+  const [pickupState, setPickupState] = useState("Delhi");
+  const [pickupPin, setPickupPin] = useState("110020");
+  const [packageLength, setPackageLength] = useState("30");
+  const [packageBreadth, setPackageBreadth] = useState("25");
+  const [packageHeight, setPackageHeight] = useState("12");
 
   // Submitting
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -86,6 +96,25 @@ export default function NewProductDropPage() {
     setIsSubmitting(true);
 
     try {
+      // If physical product, ensure warehouse pickup origin is registered for Shiprocket
+      if (productType === "physical") {
+        try {
+          await fetch("/api/seller/pickup-addresses", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              pickupLocationNickname: pickupNickname,
+              contactName: pickupContact,
+              contactPhone: pickupPhone,
+              addressLine1: pickupAddress,
+              city: pickupCity,
+              state: pickupState,
+              pincode: pickupPin,
+              isPrimary: true,
+            }),
+          });
+        } catch {}
+      }
       const payload = {
         title,
         description,
@@ -415,6 +444,133 @@ export default function NewProductDropPage() {
                   onChange={(e) => setSocialFollowers(e.target.value)}
                   placeholder="e.g. 142000"
                 />
+              </div>
+            </div>
+          )}
+
+          {/* Conditional Sub-settings for Physical Luxury Streetwear (Shiprocket Logistics Sync) */}
+          {productType === "physical" && (
+            <div className="space-y-6 pt-4 border-t border-border">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
+                <div className="flex items-center gap-2 text-white font-bold text-xs uppercase">
+                  <Box className="h-4 w-4 text-emerald-400" />
+                  <span>Physical Garment &amp; Shiprocket Courier Pickup Origin</span>
+                </div>
+                <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded">
+                  ✓ AUTOMATED COURIER DISPATCH SYNC
+                </span>
+              </div>
+
+              {/* Informational Note */}
+              <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 text-xs text-zinc-300 font-sans space-y-1">
+                <p className="font-bold text-emerald-400">Automated Seller ➔ Customer Logistics Route</p>
+                <p className="text-[11px] text-zinc-400 leading-relaxed">
+                  Order aate hi Shiprocket automatically aapke is registered warehouse pickup address se customer ke checkout delivery address ka live courier route (Delhivery / BlueDart AWB) generate karega.
+                </p>
+              </div>
+
+              {/* Warehouse Pickup Details */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+                  1. Seller Origin Warehouse / Studio Address
+                </h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <Input
+                    label="Pickup Location Nickname"
+                    required
+                    value={pickupNickname}
+                    onChange={(e) => setPickupNickname(e.target.value)}
+                    placeholder="e.g. Kaizen Central Hub"
+                  />
+                  <Input
+                    label="Dispatch Contact Person"
+                    required
+                    value={pickupContact}
+                    onChange={(e) => setPickupContact(e.target.value)}
+                    placeholder="e.g. Kaizen Dispatch Lead"
+                  />
+                  <Input
+                    label="Warehouse Phone Number"
+                    required
+                    value={pickupPhone}
+                    onChange={(e) => setPickupPhone(e.target.value)}
+                    placeholder="e.g. +91 9811002233"
+                  />
+                </div>
+
+                <Input
+                  label="Warehouse / Studio Address (Line 1)"
+                  required
+                  value={pickupAddress}
+                  onChange={(e) => setPickupAddress(e.target.value)}
+                  placeholder="e.g. Plot 42, Okhla Industrial Area Phase 3"
+                />
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <Input
+                    label="City"
+                    required
+                    value={pickupCity}
+                    onChange={(e) => setPickupCity(e.target.value)}
+                    placeholder="e.g. New Delhi"
+                  />
+                  <Input
+                    label="State"
+                    required
+                    value={pickupState}
+                    onChange={(e) => setPickupState(e.target.value)}
+                    placeholder="e.g. Delhi"
+                  />
+                  <Input
+                    label="Postal PIN Code"
+                    required
+                    value={pickupPin}
+                    onChange={(e) => setPickupPin(e.target.value)}
+                    placeholder="e.g. 110020"
+                  />
+                </div>
+              </div>
+
+              {/* Parcel Dimensions & Weight */}
+              <div className="space-y-4 pt-2 border-t border-border">
+                <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+                  2. Parcel Metrics &amp; Box Dimensions (For Courier Rate Optimization)
+                </h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                  <Input
+                    label="Fabric Specs (GSM)"
+                    value={fabricGsm}
+                    onChange={(e) => setFabricGsm(e.target.value)}
+                    placeholder="e.g. 500 GSM French Terry"
+                  />
+                  <Input
+                    label="Item Weight (Grams)"
+                    required
+                    value={itemWeightGrams}
+                    onChange={(e) => setItemWeightGrams(e.target.value)}
+                    placeholder="e.g. 850"
+                  />
+                  <Input
+                    label="Box Length (cm)"
+                    required
+                    value={packageLength}
+                    onChange={(e) => setPackageLength(e.target.value)}
+                    placeholder="30"
+                  />
+                  <Input
+                    label="Box Breadth x Height (cm)"
+                    required
+                    value={`${packageBreadth} x ${packageHeight}`}
+                    onChange={(e) => {
+                      const parts = e.target.value.split("x").map((s) => s.trim());
+                      if (parts[0]) setPackageBreadth(parts[0]);
+                      if (parts[1]) setPackageHeight(parts[1]);
+                    }}
+                    placeholder="25 x 12"
+                  />
+                </div>
               </div>
             </div>
           )}
