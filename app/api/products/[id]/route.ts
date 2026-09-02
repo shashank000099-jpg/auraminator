@@ -7,13 +7,24 @@ export async function GET(
 ) {
   try {
     const idOrSlug = params.id;
-    const supabase = createServerSupabase();
+    if (!idOrSlug) {
+      return NextResponse.json({ error: "Product identifier missing" }, { status: 400 });
+    }
 
-    const { data: product, error } = await supabase
+    const supabase = createServerSupabase();
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
+
+    let query = supabase
       .from("products")
-      .select("*, seller:profiles(*), variants:product_variants(*), digital_assets(*), external_vault_links(*)")
-      .or(`id.eq.${idOrSlug},slug.eq.${idOrSlug}`)
-      .single();
+      .select("*, seller:profiles(id, full_name, username, avatar_url, is_verified, bio), variants:product_variants(*), digital_assets(id, file_name, file_size_bytes, mime_type)");
+
+    if (isUUID) {
+      query = query.eq("id", idOrSlug);
+    } else {
+      query = query.eq("slug", idOrSlug);
+    }
+
+    const { data: product, error } = await query.single();
 
     if (!error && product) {
       return NextResponse.json({ product });

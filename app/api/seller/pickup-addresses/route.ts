@@ -9,8 +9,22 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const sellerId = searchParams.get("sellerId") || user?.id;
 
-    // Check storefronts JSON metadata first
     if (sellerId) {
+      // 1. Check seller_pickup_addresses table first (source of truth for logistics)
+      const { data: addresses, error: addrErr } = await supabase
+        .from("seller_pickup_addresses")
+        .select("*")
+        .eq("seller_id", sellerId)
+        .order("is_primary", { ascending: false });
+
+      if (!addrErr && addresses && addresses.length > 0) {
+        return NextResponse.json({
+          success: true,
+          addresses,
+        });
+      }
+
+      // 2. Check legacy storefronts JSON metadata fallback
       const { data: store } = await supabase
         .from("storefronts")
         .select("social_links")
@@ -79,9 +93,46 @@ export async function POST(req: NextRequest) {
 
     const supabase = createServerSupabase();
     const { data: { user } } = await supabase.auth.getUser();
-    const activeSellerId = sellerId || user?.id || "seller-001";
+    const activeSellerId = sellerId || user?.id;
 
-    const pickupData = {
+    if (!activeSellerId) {
+      return NextResponse.json({ error: "UNAUTHORIZED: Seller ID or active login required" }, { status: 401 });
+    }
+
+    // 1. If marking as primary, demote existing primary addresses for this seller
+    if (isPrimary) {
+      await supabase
+        .from("seller_pickup_addresses")
+        .update({ is_primary: false })
+        .eq("seller_id", activeSellerId);
+    }
+
+    // 2. Insert into source-of-truth seller_pickup_addresses table
+    const { data: newAddress, error: insErr } = await supabase
+      .from("seller_pickup_addresses")
+      .insert({
+        seller_id: activeSellerId,
+        pickup_location_nickname: pickupLocationNickname || "Primary Warehouse",
+        contact_name: contactName,
+        contact_phone: contactPhone,
+        contact_email: contactEmail || null,
+        address_line1: addressLine1,
+        address_line2: addressLine2 || "",
+        city,
+        state,
+        pincode,
+        country,
+        is_primary: isPrimary,
+        is_verified: true,
+      })
+      .select()
+      .single();
+
+    if (insErr) {
+      console.error("[-] Error inserting seller_pickup_addresses:", insErr.message);
+    }
+
+    const pickupData = newAddress || {
       id: `hub-${Date.now()}`,
       seller_id: activeSellerId,
       pickup_location_nickname: pickupLocationNickname || "Primary Warehouse",
@@ -98,7 +149,7 @@ export async function POST(req: NextRequest) {
       is_verified: true,
     };
 
-    // Store in storefronts table jsonb metadata
+    // 3. Keep storefronts JSON metadata in sync for backward compatibility
     const { data: existingStore } = await supabase
       .from("storefronts")
       .select("*")
@@ -126,7 +177,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       address: pickupData,
-      message: `Pickup location [${pickupLocationNickname}] registered for automated Shiprocket logistics routes.`,
+      message: `Pickup location [${pickupLocationNickname}] registered in seller_pickup_addresses for Shiprocket logistics.`,
     });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });

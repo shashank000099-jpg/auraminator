@@ -5,7 +5,12 @@ export async function POST(req: NextRequest) {
   try {
     const supabase = createServerSupabase();
     const { data: { user } } = await supabase.auth.getUser();
-    const sellerId = user?.id || "seller-001";
+
+    if (!user) {
+      return NextResponse.json({ error: "Authentication required for seller onboarding." }, { status: 401 });
+    }
+
+    const sellerId = user.id;
 
     const body = await req.json();
     const { legal_business_name, tax_identifier, document_urls, bank_details } = body;

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+const supabaseUrl = "https://ntamobfnorrejazppzej.supabase.co";
+
 export async function POST(req: NextRequest) {
   try {
     const { email, password, fullName, role = "buyer" } = await req.json();
@@ -12,12 +14,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://ntamobfnorrejazppzej.supabase.co";
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (password.length < 6) {
+      return NextResponse.json(
+        { error: "Password must be at least 6 characters." },
+        { status: 400 }
+      );
+    }
 
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!serviceKey) {
       return NextResponse.json(
-        { error: "Server authentication service is temporarily unavailable." },
+        { error: "Server auth service unavailable. Contact support." },
         { status: 500 }
       );
     }
@@ -27,9 +34,10 @@ export async function POST(req: NextRequest) {
     });
 
     const trimmedEmail = email.trim().toLowerCase();
-    const username = trimmedEmail.split("@")[0].replace(/[^a-z0-9]/g, "");
+    const baseUsername = trimmedEmail.split("@")[0].replace(/[^a-z0-9_]/gi, "").toLowerCase();
+    const username = baseUsername + "_" + Math.floor(1000 + Math.random() * 9000);
 
-    // 1. Create user with email auto-confirmed so they can log in instantly
+    // Create user - email auto-confirmed so login works immediately
     const { data: userData, error: createError } = await adminSupabase.auth.admin.createUser({
       email: trimmedEmail,
       password,
@@ -38,30 +46,37 @@ export async function POST(req: NextRequest) {
         full_name: fullName.trim(),
         username,
         role,
-        is_verified: role === "seller" ? false : true,
       },
     });
 
     if (createError) {
+      // Friendly error messages
+      if (createError.message.includes("already registered") || createError.message.includes("already been registered")) {
+        return NextResponse.json(
+          { error: "An account with this email already exists. Please sign in instead." },
+          { status: 409 }
+        );
+      }
       return NextResponse.json({ error: createError.message }, { status: 400 });
     }
 
     if (!userData?.user) {
-      return NextResponse.json({ error: "Failed to create account." }, { status: 500 });
+      return NextResponse.json({ error: "Failed to create account. Please try again." }, { status: 500 });
     }
 
-    // 2. Upsert profile in public.profiles table
-    try {
-      await adminSupabase.from("profiles").upsert({
-        id: userData.user.id,
-        full_name: fullName.trim(),
-        username,
-        role,
-        is_verified: role === "seller" ? false : true,
-        updated_at: new Date().toISOString(),
-      });
-    } catch (profileErr) {
-      console.warn("Profile sync warning:", profileErr);
+    // Upsert profile row in public.profiles
+    const { error: profileError } = await adminSupabase.from("profiles").upsert({
+      id: userData.user.id,
+      full_name: fullName.trim(),
+      username,
+      role,
+      is_verified: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+
+    if (profileError) {
+      console.warn("[register] Profile upsert warning:", profileError.message);
     }
 
     return NextResponse.json({
@@ -72,10 +87,12 @@ export async function POST(req: NextRequest) {
         fullName: fullName.trim(),
         username,
         role,
-        isVerified: role === "seller" ? false : true,
+        isVerified: false,
+        avatarUrl: "",
       },
     });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Registration error" }, { status: 500 });
+    console.error("[register] Unexpected error:", err);
+    return NextResponse.json({ error: "Internal server error during registration." }, { status: 500 });
   }
 }

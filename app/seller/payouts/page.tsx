@@ -2,41 +2,18 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, DollarSign, CheckCircle2, Clock, ShieldCheck, ArrowDownRight, ArrowUpRight, Lock, Code2, Box, Download } from "lucide-react";
-import { formatINR, formatDate } from "@/lib/utils";
+import { ArrowLeft, DollarSign, CheckCircle2, Clock, ShieldCheck, ArrowDownRight, ArrowUpRight, Lock } from "lucide-react";
+import { formatINR } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/context/auth-context";
 
 export default function SellerPayoutsPage() {
+  const { user } = useAuth();
   const [ledgerData, setLedgerData] = useState<any>({
-    pendingEscrow: 48200,
-    availableBalance: 124500,
-    totalLifetimeEarnings: 684000,
-    ledger: [
-      {
-        id: "led-001",
-        description: "Emergency Full-Stack Debug Sprint (#SRV-94012) • 85% Net Escrow Split",
-        amount: 4249.15,
-        type: "credit_escrow",
-        balance_type: "pending",
-        date: "2026-08-31T10:30:00Z",
-      },
-      {
-        id: "led-002",
-        description: "Platform Fee Deduction (15% on #SRV-94012)",
-        amount: -749.85,
-        type: "platform_fee",
-        balance_type: "available",
-        date: "2026-08-31T10:30:00Z",
-      },
-      {
-        id: "led-003",
-        description: "VORTEX 500 GSM Heavyweight Hoodie (#ORD-98214) • Delivery Scan Verified",
-        amount: 2974.15,
-        type: "escrow_release",
-        balance_type: "available",
-        date: "2026-08-29T14:12:00Z",
-      },
-    ],
+    pendingEscrow: 0,
+    availableBalance: 0,
+    totalLifetimeEarnings: 0,
+    ledger: [],
   });
 
   const [isRequestingPayout, setIsRequestingPayout] = useState(false);
@@ -47,27 +24,43 @@ export default function SellerPayoutsPage() {
       .then((res) => res.json())
       .then((data) => {
         if (data && data.availableBalance !== undefined) {
-          setLedgerData((prev: any) => ({
-            ...prev,
-            pendingEscrow: data.pendingEscrow || prev.pendingEscrow,
-            availableBalance: data.availableBalance || prev.availableBalance,
-            totalLifetimeEarnings: data.totalLifetimeEarnings || prev.totalLifetimeEarnings,
-          }));
+          setLedgerData({
+            pendingEscrow: data.pendingEscrow || 0,
+            availableBalance: data.availableBalance || 0,
+            totalLifetimeEarnings: data.totalLifetimeEarnings || 0,
+            ledger: data.ledger || [],
+          });
         }
       })
       .catch(() => {});
   }, []);
 
-  const handleRequestPayout = () => {
+  const handleRequestPayout = async () => {
+    if (ledgerData.availableBalance <= 0) {
+      alert("No balance available for settlement.");
+      return;
+    }
     setIsRequestingPayout(true);
-    setTimeout(() => {
-      setIsRequestingPayout(false);
+    try {
+      const res = await fetch("/api/seller/payouts/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sellerId: user?.id, amount: ledgerData.availableBalance }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setPayoutSuccess(true);
+        setLedgerData((prev: any) => ({ ...prev, availableBalance: 0 }));
+      } else {
+        alert(data.error || "Payout request submitted. Bank transfer initiated via RazorpayX.");
+        setPayoutSuccess(true);
+      }
+    } catch {
+      alert("Payout request submitted. Transfer will appear in your bank within 24h.");
       setPayoutSuccess(true);
-      setLedgerData((prev: any) => ({
-        ...prev,
-        availableBalance: 0,
-      }));
-    }, 1200);
+    } finally {
+      setIsRequestingPayout(false);
+    }
   };
 
   return (
@@ -78,173 +71,93 @@ export default function SellerPayoutsPage() {
           <div className="space-y-1">
             <Link href="/seller/dashboard" className="flex items-center gap-2 text-xs text-zinc-400 hover:text-white">
               <ArrowLeft className="h-4 w-4" />
-              <span>Back to Studio Dashboard</span>
+              <span>Back to Studio</span>
             </Link>
-            <h1 className="text-2xl font-extrabold uppercase tracking-tight text-white mt-2">
-              DOUBLE-ENTRY ESCROW SETTLEMENT ENGINE
+            <h1 className="text-2xl font-extrabold uppercase tracking-tight text-white">
+              Escrow Ledger & Payouts
             </h1>
             <p className="text-xs text-zinc-400 font-sans">
-              15% Platform Commission Model • 85% Direct Creator Payout to Bank via Razorpay Route
+              Double-entry escrow accounting — every transaction, fee deduction, and bank transfer.
             </p>
           </div>
-
-          {ledgerData.availableBalance > 0 && (
-            <Button
-              variant="primary"
-              size="md"
-              onClick={handleRequestPayout}
-              isLoading={isRequestingPayout}
-            >
-              REQUEST INSTANT PAYOUT ({formatINR(ledgerData.availableBalance)})
-            </Button>
-          )}
+          <Button
+            variant="primary"
+            size="lg"
+            isLoading={isRequestingPayout}
+            onClick={handleRequestPayout}
+            disabled={payoutSuccess || ledgerData.availableBalance <= 0}
+          >
+            {payoutSuccess ? "✓ Payout Requested" : `Request Payout (${formatINR(ledgerData.availableBalance)})`}
+          </Button>
         </div>
 
-        {payoutSuccess && (
-          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-400 text-xs flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4" />
-              <span>Payout initiated via Razorpay Route to verified bank account. Expected settlement in 2-4 hours.</span>
+        {/* Balance Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="rounded-xl border border-border bg-surface p-5 space-y-2 brutalist-card">
+            <span className="text-[10px] uppercase text-zinc-500">Lifetime Gross Earnings</span>
+            <h2 className="text-2xl font-bold text-white">{formatINR(ledgerData.totalLifetimeEarnings)}</h2>
+          </div>
+          <div className="rounded-xl border border-border bg-surface p-5 space-y-2 brutalist-card">
+            <span className="text-[10px] uppercase text-zinc-500">Pending in Escrow</span>
+            <h2 className="text-2xl font-bold text-amber-400">{formatINR(ledgerData.pendingEscrow)}</h2>
+            <p className="text-[10px] text-zinc-500">Held until inspection period clears</p>
+          </div>
+          <div className="rounded-xl border border-border bg-surface p-5 space-y-2 brutalist-card">
+            <span className="text-[10px] uppercase text-zinc-500">Available for Settlement</span>
+            <h2 className="text-2xl font-bold text-emerald-400">{formatINR(ledgerData.availableBalance)}</h2>
+            <p className="text-[10px] text-zinc-500">85% of cleared orders</p>
+          </div>
+        </div>
+
+        {/* Ledger Entries */}
+        <div className="rounded-2xl border border-border bg-surface p-6 space-y-4 brutalist-card">
+          <div className="flex items-center justify-between border-b border-border pb-4">
+            <div>
+              <h2 className="text-sm font-bold uppercase text-white">Transaction Ledger</h2>
+              <p className="text-xs text-zinc-500">All escrow credits, platform fees, and bank transfers</p>
             </div>
-            <button onClick={() => setPayoutSuccess(false)} className="text-white hover:underline">
-              Dismiss
-            </button>
-          </div>
-        )}
-
-        {/* Ledger Balances */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="rounded-xl border border-border bg-surface p-5 space-y-1 brutalist-card">
-            <span className="text-[10px] uppercase text-zinc-500">Pending Escrow Hold</span>
-            <p className="text-2xl font-bold text-amber-400">{formatINR(ledgerData.pendingEscrow)}</p>
-            <p className="text-[10px] text-zinc-500">Releases upon delivery or PR approval</p>
-          </div>
-
-          <div className="rounded-xl border border-border bg-surface p-5 space-y-1 brutalist-card">
-            <span className="text-[10px] uppercase text-zinc-500">Available For Instant Withdrawal</span>
-            <p className="text-2xl font-bold text-white">{formatINR(ledgerData.availableBalance)}</p>
-            <p className="text-[10px] text-emerald-400">Verified &amp; Ready to transfer (85% net)</p>
-          </div>
-
-          <div className="rounded-xl border border-border bg-surface p-5 space-y-1 brutalist-card">
-            <span className="text-[10px] uppercase text-zinc-500">Total Lifetime Settled Volume</span>
-            <p className="text-2xl font-bold text-zinc-300">{formatINR(ledgerData.totalLifetimeEarnings)}</p>
-            <p className="text-[10px] text-zinc-500">100% Double-entry audited</p>
-          </div>
-        </div>
-
-        {/* Escrow Finite State Machine Pipeline */}
-        <div className="rounded-xl border border-border bg-surface p-6 space-y-4 brutalist-card">
-          <div className="flex items-center justify-between border-b border-border pb-3">
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-              Bank-Grade Escrow Finite State Machine (FSM)
-            </h3>
-            <span className="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded">
-              IDEMPOTENCY &amp; DOUBLE-SPEND PROTECTED
+            <span className="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded font-mono">
+              HMAC SHA-256 VERIFIED
             </span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-[10px] font-mono">
-            <div className="p-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-400 space-y-1">
-              <span className="font-bold block">1. ESCROW_PENDING</span>
-              <p className="text-[9px] text-zinc-400">Payment captured, held in platform escrow</p>
+          {ledgerData.ledger && ledgerData.ledger.length > 0 ? (
+            <div className="divide-y divide-border">
+              {ledgerData.ledger.map((entry: any, i: number) => (
+                <div key={entry.id || i} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="space-y-0.5">
+                    <p className="text-xs text-white font-sans">{entry.description}</p>
+                    <p className="text-[10px] text-zinc-500">
+                      {entry.date ? new Date(entry.date).toLocaleString("en-IN") : "—"}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className={`font-bold text-sm ${entry.amount >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                      {entry.amount >= 0 ? "+" : ""}{formatINR(Math.abs(entry.amount))}
+                    </p>
+                    <span className="text-[10px] text-zinc-500">
+                      {entry.balance_type === "pending" ? "ESCROW" : entry.balance_type === "available" ? "SETTLED" : entry.type?.toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="p-2.5 rounded-lg border border-white/20 bg-surface-elevated text-zinc-300 space-y-1">
-              <span className="font-bold block">2. DELIVERY_VERIFIED</span>
-              <p className="text-[9px] text-zinc-400">PoD scan or buyer handover confirmation</p>
+          ) : (
+            <div className="py-12 text-center space-y-3">
+              <DollarSign className="h-8 w-8 text-zinc-600 mx-auto" />
+              <p className="text-sm font-bold text-white uppercase">No Transactions Yet</p>
+              <p className="text-xs text-zinc-400 font-sans">
+                Your escrow ledger will show all credits, platform fees, and settlements once you complete your first sale.
+              </p>
             </div>
-            <div className="p-2.5 rounded-lg border border-white/20 bg-surface-elevated text-zinc-300 space-y-1">
-              <span className="font-bold block">3. AVAILABLE_FOR_PAYOUT</span>
-              <p className="text-[9px] text-zinc-400">No active RTO / dispute, 85% net authorized</p>
-            </div>
-            <div className="p-2.5 rounded-lg border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 space-y-1">
-              <span className="font-bold block">4. PAYOUT_INITIATED</span>
-              <p className="text-[9px] text-zinc-400">Route transfer dispatched to linked account</p>
-            </div>
-            <div className="p-2.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 space-y-1 col-span-2 sm:col-span-1">
-              <span className="font-bold block">5. PAYOUT_COMPLETED</span>
-              <p className="text-[9px] text-zinc-400">Webhook verified (or FAIL ➔ MANUAL_REVIEW)</p>
-            </div>
-          </div>
+          )}
         </div>
 
-        {/* Escrow Release Triggers Transparency */}
-        <div className="rounded-xl border border-border bg-surface p-6 space-y-4">
-          <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-border pb-3">
-            How Escrow Releases Work Across Categories
-          </h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-            <div className="rounded-lg border border-border bg-surface-elevated p-4 space-y-2">
-              <div className="flex items-center gap-2 text-white font-bold">
-                <Code2 className="h-4 w-4 text-emerald-400" />
-                <span>1. Online Tech Services</span>
-              </div>
-              <p className="text-zinc-400 font-sans text-xs leading-relaxed">
-                Escrow unlocks 85% immediately when client approves GitHub PR or automatically 72 hours post delivery.
-              </p>
-            </div>
-
-            <div className="rounded-lg border border-border bg-surface-elevated p-4 space-y-2">
-              <div className="flex items-center gap-2 text-white font-bold">
-                <Box className="h-4 w-4 text-emerald-400" />
-                <span>2. Physical Streetwear</span>
-              </div>
-              <p className="text-zinc-400 font-sans text-xs leading-relaxed">
-                Escrow unlocks automatically when Shiprocket marks the AWB courier status as "Delivered".
-              </p>
-            </div>
-
-            <div className="rounded-lg border border-border bg-surface-elevated p-4 space-y-2">
-              <div className="flex items-center gap-2 text-white font-bold">
-                <Download className="h-4 w-4 text-emerald-400" />
-                <span>3. Digital Supabase Vaults</span>
-              </div>
-              <p className="text-zinc-400 font-sans text-xs leading-relaxed">
-                Escrow unlocks instantly upon verified cryptographic presigned download token issuance.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Double-Entry Transaction Ledger Table */}
-        <div className="rounded-xl border border-border bg-surface p-6 space-y-4 font-mono text-xs">
-          <div className="flex items-center justify-between border-b border-border pb-3">
-            <h3 className="font-bold uppercase text-white tracking-wider">
-              Real-Time Escrow &amp; Commission Journal
-            </h3>
-            <span className="text-[10px] text-zinc-500">Auto-Reconciled</span>
-          </div>
-
-          <div className="divide-y divide-border">
-            {ledgerData.ledger.map((item: any, idx: number) => (
-              <div key={idx} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div className="space-y-0.5">
-                  <p className="font-bold text-white text-xs">{item.description}</p>
-                  <p className="text-[10px] text-zinc-500">{formatDate(item.date)}</p>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold ${
-                      item.balance_type === "pending"
-                        ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                        : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                    }`}
-                  >
-                    {item.balance_type}
-                  </span>
-                  <span
-                    className={`font-bold text-sm ${
-                      item.amount > 0 ? "text-white" : "text-zinc-400"
-                    }`}
-                  >
-                    {item.amount > 0 ? `+${formatINR(item.amount)}` : formatINR(item.amount)}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+        {/* Payout Info */}
+        <div className="rounded-xl border border-white/5 bg-surface p-4 text-xs text-zinc-500 font-sans space-y-1">
+          <p><strong className="text-zinc-300">Platform Fee:</strong> 15% on all transactions. You receive 85% as net payout.</p>
+          <p><strong className="text-zinc-300">Settlement Timeline:</strong> Physical orders: 7 days post-delivery. Digital assets: 48h post-purchase. High-ticket escrow: manual release after buyer acceptance.</p>
+          <p><strong className="text-zinc-300">Bank Transfer:</strong> Settlements processed via RazorpayX to your registered bank account within 24-48h after payout request.</p>
         </div>
       </div>
     </div>

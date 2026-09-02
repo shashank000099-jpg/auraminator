@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { detectContactInformation } from "@/lib/anti-circumvention";
 import { EscrowStateMachine } from "@/lib/escrow-engine";
@@ -26,7 +26,49 @@ export async function GET(
       .single();
 
     if (!error && deal) {
-      return NextResponse.json({ success: true, deal });
+      const isPostPayment = deal.escrow_status !== "awaiting_deposit";
+      let buyerEmail = "";
+      let buyerPhone = "";
+      let sellerEmail = "";
+      let sellerPhone = "";
+
+      if (isPostPayment) {
+        if (deal.buyer_id) {
+          const { data: bUser } = await supabase.auth.admin.getUserById(deal.buyer_id);
+          buyerEmail = bUser?.user?.email || "";
+          buyerPhone = bUser?.user?.user_metadata?.phone || "";
+        }
+        if (deal.seller_id) {
+          const { data: sUser } = await supabase.auth.admin.getUserById(deal.seller_id);
+          sellerEmail = sUser?.user?.email || "";
+          sellerPhone = sUser?.user?.user_metadata?.phone || "";
+        }
+      }
+
+      const enrichedDeal = {
+        ...deal,
+        is_contact_revealed: isPostPayment,
+        contact_reveal_status: isPostPayment
+          ? "REVEALED: Escrow is locked. Direct phone/WhatsApp and technical communication permitted."
+          : "MASKED: Direct contact info is protected until buyer deposits escrow into vault.",
+        buyer_contact: isPostPayment
+          ? {
+              full_name: deal.buyer?.full_name || "Buyer",
+              username: deal.buyer?.username,
+              email: buyerEmail || (deal.buyer?.username ? `${deal.buyer.username}@auraminator.in` : "buyer@auraminator.in"),
+              phone: buyerPhone || "+91 (Verified on Platform)",
+            }
+          : null,
+        seller_contact: isPostPayment
+          ? {
+              full_name: deal.seller?.full_name || "Seller",
+              username: deal.seller?.username,
+              email: sellerEmail || (deal.seller?.username ? `${deal.seller.username}@auraminator.in` : "seller@auraminator.in"),
+              phone: sellerPhone || "+91 (Verified Seller Studio)",
+            }
+          : null,
+      };
+      return NextResponse.json({ success: true, deal: enrichedDeal });
     }
 
     return NextResponse.json({ error: "Deal room not found" }, { status: 404 });
@@ -46,22 +88,46 @@ export async function PATCH(
     const { action, payload } = body;
     const supabase = createServerSupabase();
 
-    const { data: dbDeal } = await supabase
+    // Auth check — know who is performing this action
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+    }
+
+    // Fetch deal from database — no fake fallback
+    const { data: dbDeal, error: dealFetchErr } = await supabase
       .from("deal_rooms")
       .select("*, product:products(*), buyer:profiles!buyer_id(*), seller:profiles!seller_id(*)")
       .eq("id", dealId)
       .single();
 
-    let deal = dbDeal || {
-      id: dealId,
-      agreed_price: 100000,
-      platform_fee: 15000,
-      seller_payout: 85000,
-      escrow_status: "awaiting_deposit",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      messages: [],
-      transfers: [],
+    if (dealFetchErr || !dbDeal) {
+      return NextResponse.json({ error: "Deal room not found." }, { status: 404 });
+    }
+
+    let deal = dbDeal;
+
+    // Helper: persist message to DB and update deal state
+    const persistMessage = async (msg: {
+      sender_id: string;
+      sender_role: "buyer" | "seller" | "platform_arbitrator";
+      message: string;
+      message_type: string;
+    }) => {
+      await supabase.from("deal_messages").insert({
+        deal_id: dealId,
+        sender_id: msg.sender_id,
+        sender_role: msg.sender_role,
+        message: msg.message,
+        message_type: msg.message_type,
+      });
+    };
+
+    const updateDealState = async (updates: Record<string, any>) => {
+      await supabase
+        .from("deal_rooms")
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq("id", dealId);
     };
 
     switch (action) {
@@ -82,121 +148,119 @@ export async function PATCH(
         }
 
         const newAmount = parseFloat(payload.amount);
-        const counterMessage = {
-          id: `msg-${Date.now()}`,
-          deal_id: dealId,
-          sender_id: payload.senderId || "seller-004",
-          sender_role: (payload.senderRole || "seller") as "buyer" | "seller" | "platform_arbitrator",
-          message: `${payload.senderRole === "seller" ? "Seller" : "Buyer"} countered the price to ₹${newAmount.toLocaleString("en-IN")}. Notes: ${payload.note || "No notes provided."}`,
-          message_type: "counter_offer" as const,
-          created_at: new Date().toISOString(),
-        };
+        if (!newAmount || isNaN(newAmount) || newAmount <= 0) {
+          return NextResponse.json({ error: "Invalid counter offer amount." }, { status: 400 });
+        }
 
-        deal = {
-          ...deal,
+        await updateDealState({
           agreed_price: newAmount,
-          platform_fee: newAmount * 0.15,
-          seller_payout: newAmount * 0.85,
-          messages: [...(deal.messages || []), counterMessage],
-        };
+          platform_fee: Math.round(newAmount * 0.15),
+          seller_payout: Math.round(newAmount * 0.85),
+        });
+
+        await persistMessage({
+          sender_id: user.id,
+          sender_role: (payload.senderRole || user.id === deal.seller_id ? "seller" : "buyer") as any,
+          message: `Counter offer of ₹${newAmount.toLocaleString("en-IN")} submitted. Notes: ${payload.note || "—"}`,
+          message_type: "counter_offer",
+        });
+
+        deal = { ...deal, agreed_price: newAmount, platform_fee: newAmount * 0.15, seller_payout: newAmount * 0.85 };
         break;
       }
 
       case "accept_offer": {
-        const acceptMessage = {
-          id: `msg-${Date.now()}`,
-          deal_id: dealId,
-          sender_id: payload.senderId || "buyer-001",
-          sender_role: (payload.senderRole || "buyer") as "buyer" | "seller" | "platform_arbitrator",
+        await updateDealState({ escrow_status: "awaiting_deposit" });
+        await persistMessage({
+          sender_id: user.id,
+          sender_role: (user.id === deal.buyer_id ? "buyer" : "seller") as any,
           message: `Offer of ₹${deal.agreed_price.toLocaleString("en-IN")} officially accepted. Escrow room is now ready for buyer deposit.`,
-          message_type: "chat" as const,
-          created_at: new Date().toISOString(),
-        };
-
-        deal = {
-          ...deal,
-          escrow_status: "awaiting_deposit",
-          messages: [...(deal.messages || []), acceptMessage],
-        };
+          message_type: "chat",
+        });
+        deal = { ...deal, escrow_status: "awaiting_deposit" };
         break;
       }
 
       case "deposit_escrow": {
-        const depositMessage = {
-          id: `msg-${Date.now()}`,
-          deal_id: dealId,
-          sender_id: payload.senderId || "buyer-001",
-          sender_role: "buyer" as const,
-          message: `Buyer successfully deposited ₹${deal.agreed_price.toLocaleString("en-IN")} into Auraminator Escrow (Razorpay Route ID: ${payload.paymentId || "pay_mock_99281"}). Seller is notified to submit transfer credentials.`,
-          message_type: "payment_deposit" as const,
-          created_at: new Date().toISOString(),
-        };
+        // Only buyer can deposit
+        if (user.id !== deal.buyer_id) {
+          return NextResponse.json({ error: "Only the buyer can deposit escrow." }, { status: 403 });
+        }
 
-        deal = {
-          ...deal,
+        await updateDealState({
           escrow_status: "escrow_locked",
-          razorpay_payment_id: payload.paymentId || "pay_mock_99281",
+          razorpay_payment_id: payload.paymentId,
           deposit_timestamp: new Date().toISOString(),
-          messages: [...(deal.messages || []), depositMessage],
-        };
+        });
+
+        await persistMessage({
+          sender_id: user.id,
+          sender_role: "buyer",
+          message: `Buyer deposited ₹${deal.agreed_price.toLocaleString("en-IN")} into Auraminator Escrow (Razorpay: ${payload.paymentId || "pending"}). Seller notified to submit credentials.`,
+          message_type: "payment_deposit",
+        });
+        deal = { ...deal, escrow_status: "escrow_locked" };
         break;
       }
 
       case "submit_credentials": {
-        const newTransfer = {
-          id: `trf-${Date.now()}`,
+        // Only seller can submit credentials
+        if (user.id !== deal.seller_id) {
+          return NextResponse.json({ error: "Only the seller can submit credentials." }, { status: 403 });
+        }
+
+        await supabase.from("deal_transfers").insert({
           deal_id: dealId,
           transfer_type: payload.transferType || "custom_transfer",
           credential_payload: payload.credentialPayload,
-          handover_instructions: payload.instructions || "Please review and verify access within 48 hours.",
+          handover_instructions: payload.instructions || "Please review and verify access within the 7-Day (168-Hour) warranty window.",
           verified_by_buyer: false,
-          created_at: new Date().toISOString(),
-        };
+        });
 
-        const submitMessage = {
-          id: `msg-${Date.now()}`,
-          deal_id: dealId,
-          sender_id: payload.senderId || "seller-004",
-          sender_role: "seller" as const,
-          message: `Seller submitted credentials for [${payload.transferType}]. 48-Hour Buyer Inspection Window has commenced.`,
-          message_type: "credentials_submitted" as const,
-          created_at: new Date().toISOString(),
-        };
-
-        deal = {
-          ...deal,
+        await updateDealState({
           escrow_status: "buyer_inspecting",
-          inspection_deadline: new Date(Date.now() + 48 * 3600 * 1000).toISOString(),
-          transfers: [...(deal.transfers || []), newTransfer],
-          messages: [...(deal.messages || []), submitMessage],
-        };
+          inspection_period_hours: 168,
+          inspection_deadline: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString(),
+        });
+
+        await persistMessage({
+          sender_id: user.id,
+          sender_role: "seller",
+          message: `Seller submitted credentials for [${payload.transferType || "custom_transfer"}]. 7-Day (168-Hour) Buyer Inspection & Warranty Window has commenced.`,
+          message_type: "credentials_submitted",
+        });
+        deal = { ...deal, escrow_status: "buyer_inspecting" };
         break;
       }
 
       case "verify_transfer_item": {
-        deal = {
-          ...deal,
-          transfers: ((deal.transfers || []) as any[]).map((t: any) =>
-            t.id === payload.transferId
-              ? { ...t, verified_by_buyer: true, verified_at: new Date().toISOString() }
-              : t
-          ),
-        };
+        await supabase
+          .from("deal_transfers")
+          .update({ verified_by_buyer: true, verified_at: new Date().toISOString() })
+          .eq("id", payload.transferId)
+          .eq("deal_id", dealId);
         break;
       }
 
       case "confirm_handover_release": {
-        const releaseMessage = {
-          id: `msg-${Date.now()}`,
-          deal_id: dealId,
-          sender_id: payload.senderId || "buyer-001",
-          sender_role: "buyer" as const,
-          message: `Buyer verified all assets and confirmed handover. Auraminator Escrow authorized ₹${deal.seller_payout.toLocaleString("en-IN")} (85% net payable) to seller's linked account. Platform fee of ₹${deal.platform_fee.toLocaleString("en-IN")} (15%) captured. State: [AVAILABLE_FOR_PAYOUT ➔ PAYOUT_INITIATED].`,
-          message_type: "escrow_released" as const,
-          created_at: new Date().toISOString(),
-        };
+        // Only buyer can confirm release
+        if (user.id !== deal.buyer_id) {
+          return NextResponse.json({ error: "Only the buyer can confirm handover and release escrow." }, { status: 403 });
+        }
 
-        // Trigger Finite State Machine Authorization
+        await persistMessage({
+          sender_id: user.id,
+          sender_role: "buyer",
+          message: `Buyer confirmed handover. Escrow of ₹${deal.seller_payout.toLocaleString("en-IN")} (85% net) authorized for release to seller. Platform fee ₹${deal.platform_fee.toLocaleString("en-IN")} (15%) captured.`,
+          message_type: "escrow_released",
+        });
+
+        await updateDealState({
+          escrow_status: "completed_paid",
+          completed_at: new Date().toISOString(),
+        });
+
+        // Trigger Escrow FSM authorization
         try {
           await EscrowStateMachine.verifyDeliveryAndAuthorize({
             orderId: dealId,
@@ -205,30 +269,23 @@ export async function PATCH(
             referenceId: dealId,
           });
         } catch (fsmErr: any) {
-          console.error("[-] Digital deal FSM authorization notice:", fsmErr.message);
+          console.error("[-] Digital deal FSM authorization error:", fsmErr.message);
         }
 
-        deal = {
-          ...deal,
-          escrow_status: "completed_paid",
-          completed_at: new Date().toISOString(),
-          messages: [...(deal.messages || []), releaseMessage],
-        };
+        deal = { ...deal, escrow_status: "completed_paid" };
         break;
       }
 
       case "open_dispute": {
-        const disputeMessage = {
-          id: `msg-${Date.now()}`,
-          deal_id: dealId,
-          sender_id: payload.senderId || "buyer-001",
-          sender_role: (payload.senderRole || "buyer") as "buyer" | "seller" | "platform_arbitrator",
-          message: `DISPUTE TRIBUNAL OPENED. Escrow state frozen in [ESCROW_DISPUTED_HOLD]. Auraminator Compliance Lead will review audit logs and arbitrate within 24 hours. Reason: ${payload.reason}`,
-          message_type: "dispute_opened" as const,
-          created_at: new Date().toISOString(),
-        };
+        await persistMessage({
+          sender_id: user.id,
+          sender_role: (user.id === deal.buyer_id ? "buyer" : "seller") as any,
+          message: `DISPUTE TRIBUNAL OPENED. Escrow state frozen in [ESCROW_DISPUTED_HOLD]. Auraminator Compliance will review audit logs and arbitrate within 24 hours. Reason: ${payload.reason}`,
+          message_type: "dispute_opened",
+        });
 
-        // Freeze Escrow in FSM
+        await updateDealState({ escrow_status: "disputed" });
+
         try {
           await EscrowStateMachine.freezeEscrow({
             orderId: dealId,
@@ -238,11 +295,7 @@ export async function PATCH(
           });
         } catch {}
 
-        deal = {
-          ...deal,
-          escrow_status: "disputed",
-          messages: [...(deal.messages || []), disputeMessage],
-        };
+        deal = { ...deal, escrow_status: "disputed" };
         break;
       }
 
@@ -263,20 +316,12 @@ export async function PATCH(
           }
         }
 
-        const chatMessage = {
-          id: `msg-${Date.now()}`,
-          deal_id: dealId,
-          sender_id: payload.senderId || "buyer-001",
-          sender_role: (payload.senderRole || "buyer") as "buyer" | "seller" | "platform_arbitrator",
+        await persistMessage({
+          sender_id: user.id,
+          sender_role: (user.id === deal.buyer_id ? "buyer" : "seller") as any,
           message: payload.message,
-          message_type: "chat" as const,
-          created_at: new Date().toISOString(),
-        };
-
-        deal = {
-          ...deal,
-          messages: [...(deal.messages || []), chatMessage],
-        };
+          message_type: "chat",
+        });
         break;
       }
 
@@ -284,9 +329,23 @@ export async function PATCH(
         return NextResponse.json({ error: "Unknown action" }, { status: 400 });
     }
 
+    // Return fresh deal data from DB
+    const { data: updatedDeal } = await supabase
+      .from("deal_rooms")
+      .select(`
+        *,
+        product:products(*),
+        buyer:profiles!buyer_id(*),
+        seller:profiles!seller_id(*),
+        transfers:deal_transfers(*),
+        messages:deal_messages(*, sender:profiles!sender_id(*))
+      `)
+      .eq("id", dealId)
+      .single();
+
     return NextResponse.json({
       success: true,
-      deal,
+      deal: updatedDeal || deal,
       message: `Action [${action}] executed successfully.`,
     });
   } catch (err: any) {

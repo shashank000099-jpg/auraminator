@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     const supabase = createServerSupabase();
     let query = supabase
       .from("products")
-      .select("*, seller:profiles(*), variants:product_variants(*), digital_assets(*), external_vault_links(*)")
+      .select("*, seller:profiles(id, full_name, username, avatar_url, is_verified, bio), variants:product_variants(*), digital_assets(id, file_name, file_size_bytes, mime_type)")
       .eq("status", "published")
       .order("created_at", { ascending: false });
 

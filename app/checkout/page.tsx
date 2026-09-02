@@ -15,13 +15,13 @@ export default function CheckoutPage() {
   const { items, getTotalAmount, clearCart, anonymousSessionId } = useCartStore();
   const { user } = useAuth();
 
-  const [fullName, setFullName] = useState(user?.fullName || "Alex Mercer");
-  const [phone, setPhone] = useState("9876543210");
-  const [email, setEmail] = useState(user?.email || "alex@auraminator.in");
-  const [addressLine1, setAddressLine1] = useState("102 Silicon Cyber Heights, Indiranagar");
-  const [city, setCity] = useState("Bengaluru");
-  const [state, setState] = useState("Karnataka");
-  const [postalCode, setPostalCode] = useState("560038");
+  const [fullName, setFullName] = useState(user?.fullName || "");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState(user?.email || "");
+  const [addressLine1, setAddressLine1] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [postalCode, setPostalCode] = useState("");
 
   const [couponCode, setCouponCode] = useState("");
   const [appliedDiscount, setAppliedDiscount] = useState(0);
@@ -48,28 +48,48 @@ export default function CheckoutPage() {
 
     if (postalCode && postalCode.length === 6) {
       setIsCalculatingShipping(true);
-      const firstPhysicalItem = items.find((i) => i.product.product_type === "physical");
-      const sellerId = firstPhysicalItem?.product.seller_id;
+      const physicalSellers = Array.from(
+        new Set(
+          items
+            .filter((i) => i.product.product_type === "physical" && i.product.seller_id)
+            .map((i) => i.product.seller_id)
+        )
+      );
 
-      fetch("/api/shipping/calculate-rate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sellerId,
-          destinationPincode: postalCode,
-          weightInKg: 0.85,
-        }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data?.rate !== undefined) {
-            setShippingFee(data.rate);
-            if (data.courier_name) setCourierName(data.courier_name);
-            if (data.etd_days) setEtdDays(data.etd_days);
-          }
+      if (physicalSellers.length === 0) {
+        setShippingFee(0);
+        setIsCalculatingShipping(false);
+        return;
+      }
+
+      // Calculate rate for each seller origin warehouse and sum them
+      Promise.all(
+        physicalSellers.map((sId) =>
+          fetch("/api/shipping/calculate-rate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sellerId: sId,
+              destinationPincode: postalCode,
+              weightInKg: 0.85,
+            }),
+          })
+            .then((res) => res.json())
+            .catch(() => ({ rate: 149 }))
+        )
+      )
+        .then((results) => {
+          let totalRate = 0;
+          results.forEach((r) => {
+            totalRate += typeof r.rate === "number" ? r.rate : 149;
+          });
+          setShippingFee(totalRate);
+          const firstValid = results.find((r) => r.courier_name);
+          if (firstValid?.courier_name) setCourierName(firstValid.courier_name);
+          if (firstValid?.etd_days) setEtdDays(firstValid.etd_days);
         })
         .catch(() => {
-          setShippingFee(149);
+          setShippingFee(149 * physicalSellers.length);
         })
         .finally(() => {
           setIsCalculatingShipping(false);
@@ -408,6 +428,9 @@ export default function CheckoutPage() {
                   <span>Total Payable Amount</span>
                   <span className="text-emerald-400">{formatINR(finalTotal)}</span>
                 </div>
+                <p className="text-[10px] text-zinc-400 font-sans italic">
+                  * Seller receives 85% net of product base price into escrow. Gateway processing fee (2.36%) and courier logistics costs are covered by buyer.
+                </p>
               </div>
 
               <Button

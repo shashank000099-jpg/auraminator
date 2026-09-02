@@ -23,37 +23,12 @@ export async function GET(
       entitlement = data;
     }
 
-    // Demo / mock fallback if testing or guest entitlement
+    // No auth fallback - entitlement must exist and belong to this user
     if (!entitlement) {
-      if (entitlementId.startsWith("demo-") || entitlementId.startsWith("ent-") || !user) {
-        entitlement = {
-          id: entitlementId,
-          access_type: entitlementId.includes("link") ? "digital_link" : "digital_file",
-          download_count: 3,
-          max_downloads: 50,
-          status: "active",
-          products: {
-            title: "Elite Pro Design System & Vector Kit",
-            external_vault_links: [
-              {
-                destination_url: "https://notion.so/auraminator-vault-sample-access",
-                access_instructions: "Use code AURAMINATOR-PRO at login to access full workspace.",
-              },
-            ],
-            digital_assets: [
-              {
-                r2_asset_key: "sellers/demo/vector-kit-v2.zip",
-                file_name: "auraminator-vector-kit-v2.zip",
-              },
-            ],
-          },
-        };
-      } else {
-        return NextResponse.json(
-          { error: "Entitlement revoked, expired, or unauthorized." },
-          { status: 403 }
-        );
-      }
+      return NextResponse.json(
+        { error: "Entitlement not found, revoked, or you are not authorized to access this asset." },
+        { status: 403 }
+      );
     }
 
     // Telemetry and Audit

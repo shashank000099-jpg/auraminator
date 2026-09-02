@@ -62,23 +62,36 @@ Generate optimal SEO & GEO metadata in valid JSON format with these exact keys:
 }
 Output ONLY the raw JSON object, without markdown backticks or commentary.`;
 
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              temperature: 0.2,
-              maxOutputTokens: 600,
-            },
-          }),
-        }
-      );
+      const models = ["gemini-flash-latest", "gemini-3.6-flash", "gemini-flash-lite-latest"];
+      let data: any = null;
 
-      if (res.ok) {
-        const data = await res.json();
+      for (const model of models) {
+        try {
+          const res = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                  temperature: 0.2,
+                  maxOutputTokens: 600,
+                },
+              }),
+            }
+          );
+
+          if (res.ok) {
+            data = await res.json();
+            break;
+          }
+        } catch {
+          // Continue to next model
+        }
+      }
+
+      if (data) {
         const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
         const cleanJsonStr = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
         const parsed = JSON.parse(cleanJsonStr);

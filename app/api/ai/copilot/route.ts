@@ -2,10 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
 
 const GEMINI_MODELS = [
-  "gemini-3.5-flash",
-  "gemini-3.8-flash",
-  "gemini-3.1-flash-lite",
+  "gemini-flash-latest",
   "gemini-3.6-flash",
+  "gemini-flash-lite-latest",
 ];
 
 export async function POST(req: NextRequest) {

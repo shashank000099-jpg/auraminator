@@ -67,6 +67,10 @@ export async function POST(req: NextRequest) {
     const supabase = createServerSupabase();
     const { data: { user } } = await supabase.auth.getUser();
 
+    if (!user) {
+      return NextResponse.json({ error: "UNAUTHORIZED: You must be logged in to post a job." }, { status: 401 });
+    }
+
     // Automatically generate Google for Jobs SEO & GEO metadata with Gemini AI
     const autoSeo = await generateAutomatedSeo({
       title,
@@ -79,7 +83,7 @@ export async function POST(req: NextRequest) {
 
     const newJob = {
       id: uuidv4(),
-      poster_id: user?.id || "demo-poster-uuid-0001",
+      poster_id: user.id,
       company_name,
       company_logo: company_logo || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
       title,

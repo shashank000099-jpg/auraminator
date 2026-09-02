@@ -46,19 +46,30 @@ export async function POST(request: Request) {
     }
 
     const supabase = createServerSupabase();
-    const { data: { session } } = await supabase.auth.getSession();
-    const buyerId = session?.user?.id || "anonymous-buyer";
+    const { data: { user } } = await supabase.auth.getUser();
 
-    const { data: product } = await supabase
+    if (!user) {
+      return NextResponse.json(
+        { error: "UNAUTHORIZED: You must be logged in to make an offer." },
+        { status: 401 }
+      );
+    }
+
+    const buyerId = user.id;
+
+    const { data: product, error: prodErr } = await supabase
       .from("products")
       .select("seller_id")
       .eq("id", productId)
       .single();
 
-    const sellerId = product?.seller_id || "unknown-seller";
+    if (prodErr || !product) {
+      return NextResponse.json({ error: "Product not found." }, { status: 404 });
+    }
 
-    const newOffer = {
-      id: `offer-${Date.now()}`,
+    const sellerId = product.seller_id;
+
+    const offerPayload = {
       product_id: productId,
       buyer_id: buyerId,
       seller_id: sellerId,
@@ -67,13 +78,22 @@ export async function POST(request: Request) {
       last_offered_by: "buyer" as const,
       status: "pending" as const,
       terms_note: termsNote || "Standard buyer offer subject to 7-day escrow inspection.",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
     };
+
+    const { data: insertedOffer, error: insertErr } = await supabase
+      .from("offers")
+      .insert(offerPayload)
+      .select()
+      .single();
+
+    if (insertErr) {
+      console.error("[-] Offer insert error:", insertErr.message);
+      return NextResponse.json({ error: insertErr.message }, { status: 500 });
+    }
 
     return NextResponse.json({
       success: true,
-      offer: newOffer,
+      offer: insertedOffer,
       message: "Offer submitted successfully. The seller has been notified to review or counter.",
       dealUrl: `/account/deals`,
     });

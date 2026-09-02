@@ -71,20 +71,20 @@ function LoginForm() {
     setIsSubmitting(true);
     setErrorMessage("");
 
-    // Master Root Admin Auto-Route
-    if (
-      email.trim().toLowerCase() === "shashank000099@gmail.com" &&
-      password.trim() === "469087383207"
-    ) {
-      localStorage.setItem("auraminator_admin_authenticated", "true");
-      localStorage.setItem("auraminator_admin_email", "shashank000099@gmail.com");
-      router.push("/admin/dashboard");
-      return;
-    }
-
     try {
       const res = await signIn(email, password);
       if (res.success) {
+        // Admin users get redirected to admin dashboard
+        const savedUser = localStorage.getItem("auraminator_user_session");
+        if (savedUser) {
+          try {
+            const parsed = JSON.parse(savedUser);
+            if (parsed.role === "admin") {
+              router.push("/admin/dashboard");
+              return;
+            }
+          } catch {}
+        }
         router.push(redirectUrl);
       } else {
         setErrorMessage(res.error || "Authentication failed. Please check your credentials.");
@@ -113,16 +113,6 @@ function LoginForm() {
     }
   };
 
-  const handleQuickDemoLogin = async (role: "buyer" | "seller") => {
-    setIsSubmitting(true);
-    setErrorMessage("");
-    const demoEmail = role === "seller" ? "kaizen@auraminator.in" : "alex@auraminator.in";
-    const res = await signIn(demoEmail, "password123");
-    if (res.success) {
-      router.push(redirectUrl === "/explore" ? (role === "seller" ? "/seller/dashboard" : "/explore") : redirectUrl);
-    }
-    setIsSubmitting(false);
-  };
 
   return (
     <div className="max-w-md w-full space-y-6 relative z-10">

@@ -5,7 +5,12 @@ export async function POST(req: NextRequest) {
   try {
     const supabase = createServerSupabase();
     const { data: { user } } = await supabase.auth.getUser();
-    const buyerId = user?.id || "demo-buyer-uuid-0001";
+
+    if (!user) {
+      return NextResponse.json({ error: "UNAUTHORIZED: You must be logged in to submit a review." }, { status: 401 });
+    }
+
+    const buyerId = user.id;
 
     const body = await req.json();
     const { product_id, rating, comment } = body;
@@ -14,7 +19,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Product ID and rating are required" }, { status: 400 });
     }
 
-    // Insert review (RLS will check verified purchase check in production)
+    // Check if buyer has a captured order containing this product
+    const { data: verifiedOrder } = await supabase
+      .from("order_items")
+      .select("id, orders!inner(buyer_id, payment_status)")
+      .eq("product_id", product_id)
+      .eq("orders.buyer_id", buyerId)
+      .eq("orders.payment_status", "captured")
+      .limit(1)
+      .maybeSingle();
+
+    const isVerifiedPurchase = !!verifiedOrder;
+
+    // Insert review into database
     const { data: review, error } = await supabase
       .from("reviews")
       .insert({
@@ -22,7 +39,7 @@ export async function POST(req: NextRequest) {
         buyer_id: buyerId,
         rating: Math.min(5, Math.max(1, parseInt(rating, 10))),
         comment: comment || "",
-        is_verified_purchase: true,
+        is_verified_purchase: isVerifiedPurchase,
       })
       .select()
       .single();
@@ -34,7 +51,7 @@ export async function POST(req: NextRequest) {
         product_id,
         rating,
         comment,
-        is_verified_purchase: true,
+        is_verified_purchase: isVerifiedPurchase,
         created_at: new Date().toISOString(),
       },
     });

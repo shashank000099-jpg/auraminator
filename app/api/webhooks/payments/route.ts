@@ -7,30 +7,39 @@ export async function POST(req: NextRequest) {
   try {
     const rawBody = await req.text();
     const signature = req.headers.get("x-razorpay-signature");
-    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET || "placeholder-webhook-secret";
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
 
-    // 1. Cryptographic HMAC Signature Verification
-    if (signature && process.env.NODE_ENV === "production" && webhookSecret !== "placeholder-webhook-secret") {
+    // 1. HMAC Signature Verification — enforce whenever secret is configured
+    if (webhookSecret && webhookSecret !== "placeholder-webhook-secret") {
+      if (!signature) {
+        return NextResponse.json({ error: "Missing x-razorpay-signature header" }, { status: 400 });
+      }
       const expectedSignature = crypto
         .createHmac("sha256", webhookSecret)
         .update(rawBody)
         .digest("hex");
 
       if (expectedSignature !== signature) {
+        console.error("[webhook/payments] HMAC mismatch — potential spoofing attempt");
         return NextResponse.json({ error: "Invalid HMAC Signature" }, { status: 400 });
       }
     }
 
-    let event: any = {};
+    // 2. Parse JSON body — reject if malformed
+    let event: any;
     try {
       event = JSON.parse(rawBody);
     } catch {
-      event = { event: "payment.captured", payload: { payment: { entity: { id: "pay_mock_1", order_id: "order_mock_1" } } } };
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
 
     const supabase = createServerSupabase();
     const eventId = event.event_id || `evt_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    const eventType = event.event || "payment.captured";
+    const eventType = event.event;
+
+    if (!eventType) {
+      return NextResponse.json({ error: "Missing event type in payload" }, { status: 400 });
+    }
 
     // 2. Strict Idempotency Check
     const { error: idempotencyErr } = await supabase
@@ -101,9 +110,20 @@ export async function POST(req: NextRequest) {
               });
             }
 
-            // C. Commit Physical Inventory
+            // C. Commit Physical Inventory (Resolve real active reservation UUID)
             if (item.product_type === "physical" && item.variant_id) {
-              await supabase.rpc("commit_inventory", { p_reservation_id: item.id });
+              const { data: activeRes } = await supabase
+                .from("inventory_reservations")
+                .select("id")
+                .eq("variant_id", item.variant_id)
+                .eq("status", "active")
+                .order("created_at", { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+              if (activeRes?.id) {
+                await supabase.rpc("commit_inventory", { p_reservation_id: activeRes.id });
+              }
             }
 
             // D. Initialize Service Intake Vault for Tech Services

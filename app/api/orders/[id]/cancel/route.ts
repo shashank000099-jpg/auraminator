@@ -36,9 +36,15 @@ export async function POST(
       return NextResponse.json({ error: "Order not found in database." }, { status: 404 });
     }
 
-    // 2. Server-side Authorization Check
-    // If authenticated, ensure caller is the actual buyer or platform admin
-    if (user && user.id !== order.buyer_id) {
+    // 2. Server-side Authorization Check (Strict Zero-Trust)
+    if (!user) {
+      return NextResponse.json(
+        { error: "UNAUTHORIZED: Authentication required to cancel orders." },
+        { status: 401 }
+      );
+    }
+
+    if (user.id !== order.buyer_id) {
       const { data: profile } = await supabase
         .from("profiles")
         .select("role")

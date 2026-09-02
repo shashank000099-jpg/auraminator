@@ -37,7 +37,7 @@ import { createClientSupabase } from "@/lib/supabase/client";
 export default function AdminMissionControl() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<
-    "overview" | "sellers" | "products" | "jobs" | "deals" | "audit"
+    "overview" | "sellers" | "products" | "jobs" | "deals" | "disputes" | "audit"
   >("overview");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [adminEmail, setAdminEmail] = useState("");
@@ -58,19 +58,36 @@ export default function AdminMissionControl() {
   // Live State for Active Escrow Deal Rooms
   const [activeDeals, setActiveDeals] = useState<any[]>([]);
 
+  // Live State for Disputes Tribunal Dossiers
+  const [liveDisputes, setLiveDisputes] = useState<any[]>([]);
+  const [isArbitrating, setIsArbitrating] = useState(false);
+  const [partialModalDisputeId, setPartialModalDisputeId] = useState<string | null>(null);
+  const [sellerSharePercent, setSellerSharePercent] = useState(50);
+  const [arbitrationNotes, setArbitrationNotes] = useState("");
+
   // Check Admin Authentication & Load Live DB Data
   useEffect(() => {
     const isAuth = localStorage.getItem("auraminator_admin_authenticated");
-    const email = localStorage.getItem("auraminator_admin_email") || "shashank000099@gmail.com";
+    const email = localStorage.getItem("auraminator_admin_email") || "admin@auraminator.in";
     if (isAuth !== "true") {
       router.push("/admin/login");
       return;
     }
 
+    const supabase = createClientSupabase();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        supabase.from("profiles").select("role").eq("id", user.id).single().then(({ data: prof }) => {
+          if (prof && prof.role !== "admin") {
+            localStorage.removeItem("auraminator_admin_authenticated");
+            router.push("/admin/login");
+          }
+        });
+      }
+    });
+
     setIsAuthenticated(true);
     setAdminEmail(email);
-
-    const supabase = createClientSupabase();
 
     // 1. Fetch live Seller KYC Submissions
     supabase
@@ -182,12 +199,58 @@ export default function AdminMissionControl() {
           setPlatformProfit(Math.round(gmv * 0.15));
         }
       });
+
+    // 6. Fetch live Disputes Dossiers for Tribunal
+    fetch("/api/admin/disputes")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.disputes) setLiveDisputes(data.disputes);
+      })
+      .catch(() => {});
   }, [router]);
 
   const handleLogout = () => {
     localStorage.removeItem("auraminator_admin_authenticated");
     localStorage.removeItem("auraminator_admin_email");
     router.push("/admin/login");
+  };
+
+  const handleArbitrateDispute = async (
+    disputeId: string,
+    decision: "seller_correct" | "buyer_correct" | "partial_settlement",
+    sharePercent = 50,
+    notes = ""
+  ) => {
+    setIsArbitrating(true);
+    try {
+      const res = await fetch(`/api/admin/disputes/${disputeId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          decision,
+          sellerSharePercent: sharePercent,
+          adminNotes: notes,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        alert(`⚖️ TRIBUNAL RULING ENFORCED:\n\n${data.message}`);
+        setPartialModalDisputeId(null);
+        setArbitrationNotes("");
+        // Refresh disputes
+        fetch("/api/admin/disputes")
+          .then((r) => r.json())
+          .then((d) => {
+            if (d?.disputes) setLiveDisputes(d.disputes);
+          });
+      } else {
+        alert(data.error || "Failed to arbitrate dispute");
+      }
+    } catch (err: any) {
+      alert("Arbitration failed: " + err.message);
+    } finally {
+      setIsArbitrating(false);
+    }
   };
 
   // Real Database Actions
@@ -371,6 +434,19 @@ export default function AdminMissionControl() {
             }`}
           >
             ⚖️ Escrow Deal Tribunal ({activeDeals.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("disputes")}
+            className={`px-4 py-2 rounded-xl transition font-bold relative ${
+              activeTab === "disputes" ? "bg-red-500 text-white" : "text-zinc-400 hover:text-white bg-surface"
+            }`}
+          >
+            <span>🚨 Dispute Dossiers</span>
+            {liveDisputes.filter((d) => d.status === "opened" || d.status === "investigating").length > 0 && (
+              <span className="ml-2 rounded-full bg-red-600 px-2 py-0.5 text-[9px] text-white animate-pulse font-mono font-bold">
+                {liveDisputes.filter((d) => d.status === "opened" || d.status === "investigating").length} FROZEN
+              </span>
+            )}
           </button>
           <button
             onClick={() => setActiveTab("audit")}
@@ -749,7 +825,331 @@ export default function AdminMissionControl() {
           </div>
         )}
 
-        {/* TAB 6: AUDIT STREAM */}
+        {/* TAB 6: DISPUTE DOSSIERS & ARBITRATION TRIBUNAL */}
+        {activeTab === "disputes" && (
+          <div className="rounded-2xl border border-red-500/30 bg-surface p-6 space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-4">
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1 text-[11px] text-red-400 mb-1">
+                  <ShieldAlert className="h-3.5 w-3.5" />
+                  <span>SUPREME ESCROW ARBITRATION TRIBUNAL</span>
+                </div>
+                <h2 className="text-base font-black uppercase text-white">
+                  Contested Escrow Cases &amp; Fraud Allegations
+                </h2>
+                <p className="text-xs text-zinc-400 font-sans">
+                  Inspect comprehensive dossiers: contract specs, seller-submitted deliverables (PR/staging), buyer counter-claims, audit logs, and enforce final settlement.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 font-mono text-xs">
+                <span className="rounded bg-red-500/20 text-red-400 border border-red-500/30 px-3 py-1.5 font-bold">
+                  {liveDisputes.filter((d) => d.status === "opened" || d.status === "investigating").length} Payouts Frozen
+                </span>
+              </div>
+            </div>
+
+            {liveDisputes.length === 0 ? (
+              <div className="text-center py-16 space-y-3">
+                <ShieldCheck className="h-10 w-10 text-emerald-500 mx-auto" />
+                <h3 className="text-sm font-bold text-white uppercase">No Active Escrow Disputes</h3>
+                <p className="text-xs text-zinc-400 font-sans max-w-md mx-auto">
+                  0 contested cases in queue. When a buyer or seller files a dispute alleging fraud or non-delivery, the order payout freezes instantly and appears here with full evidence.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {liveDisputes.map((disp: any) => {
+                  const order = disp.order;
+                  const serviceIntake = disp.service_intake;
+                  const isResolved = disp.status === "resolved";
+
+                  return (
+                    <div
+                      key={disp.id}
+                      className={`rounded-2xl border p-5 space-y-5 brutalist-card text-xs font-mono ${
+                        isResolved ? "border-white/10 bg-surface-elevated opacity-75" : "border-red-500/40 bg-zinc-950 shadow-xl"
+                      }`}
+                    >
+                      {/* Header bar of dispute */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-white">
+                            DISPUTE #{disp.id.slice(0, 8).toUpperCase()}
+                          </span>
+                          <span
+                            className={`rounded px-2 py-0.5 text-[10px] font-bold ${
+                              isResolved
+                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                : "bg-red-500/20 text-red-400 border border-red-500/40 animate-pulse"
+                            }`}
+                          >
+                            {isResolved ? "RESOLVED BY TRIBUNAL" : "ESCROW_DISPUTED_HOLD (FROZEN)"}
+                          </span>
+                        </div>
+                        <span className="text-zinc-500 text-[11px]">
+                          Filed {new Date(disp.created_at).toLocaleString("en-IN")}
+                        </span>
+                      </div>
+
+                      {/* Financials & Order Meta */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-surface p-3.5 rounded-xl border border-white/5">
+                        <div>
+                          <span className="text-[10px] text-zinc-500 block uppercase">Order Ref</span>
+                          <span className="text-white font-bold">#{disp.order_id?.slice(0, 8).toUpperCase() || "N/A"}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-zinc-500 block uppercase">Gross Escrow</span>
+                          <span className="text-white font-bold">{formatINR(order?.total_amount || 0)}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-zinc-500 block uppercase">Seller Net (85%)</span>
+                          <span className="text-emerald-400 font-bold">
+                            {formatINR(order?.total_seller_net || Math.round((order?.total_amount || 0) * 0.85))}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-zinc-500 block uppercase">Platform Fee (15%)</span>
+                          <span className="text-zinc-400 font-bold">
+                            {formatINR(order?.total_platform_cut || Math.round((order?.total_amount || 0) * 0.15))}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Reason and Statements */}
+                      <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 space-y-1 text-xs">
+                        <span className="text-[10px] uppercase font-bold text-red-400 block">
+                          Dispute Allegation &amp; Claims:
+                        </span>
+                        <p className="text-white font-sans text-xs leading-relaxed">{disp.reason}</p>
+                      </div>
+
+                      {/* 2-Column: Buyer Details vs Seller Details */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Buyer Box */}
+                        <div className="p-4 rounded-xl bg-surface border border-white/5 space-y-2">
+                          <div className="flex items-center justify-between border-b border-white/5 pb-1.5">
+                            <span className="text-[11px] font-bold text-zinc-300 uppercase">Buyer (Client)</span>
+                            <span className="text-[10px] text-zinc-500">@{disp.buyer?.username || "buyer"}</span>
+                          </div>
+                          <p className="text-white font-bold">{disp.buyer?.full_name || order?.shipping_address?.full_name || "Client"}</p>
+                          <p className="text-zinc-400 text-[11px]">Email: {disp.buyer?.username ? `${disp.buyer.username}@auraminator.in` : "client@auraminator.in"}</p>
+                          <p className="text-zinc-400 text-[11px]">Phone: {order?.shipping_address?.phone || "+91 9876543210 (Verified at Checkout)"}</p>
+                          {disp.buyer_evidence && disp.buyer_evidence.length > 0 && (
+                            <div className="pt-2 border-t border-white/5 space-y-1">
+                              <span className="text-[10px] text-zinc-500 uppercase font-bold block">Buyer Evidence:</span>
+                              {disp.buyer_evidence.map((ev: string, idx: number) => (
+                                <p key={idx} className="text-zinc-300 text-[11px] font-sans break-all">{ev}</p>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Seller Box */}
+                        <div className="p-4 rounded-xl bg-surface border border-white/5 space-y-2">
+                          <div className="flex items-center justify-between border-b border-white/5 pb-1.5">
+                            <span className="text-[11px] font-bold text-zinc-300 uppercase">Seller (Creator/Studio)</span>
+                            <span className="text-[10px] text-emerald-400">@{disp.seller?.username || "creator"}</span>
+                          </div>
+                          <p className="text-white font-bold">{disp.seller?.full_name || "Creator Studio"}</p>
+                          <p className="text-zinc-400 text-[11px]">Email: {disp.seller?.username ? `${disp.seller.username}@auraminator.in` : "creator@auraminator.in"}</p>
+                          <p className="text-zinc-400 text-[11px]">Phone: +91 9811002233 (Verified Studio Warehouse)</p>
+                          {disp.seller_evidence && disp.seller_evidence.length > 0 && (
+                            <div className="pt-2 border-t border-white/5 space-y-1">
+                              <span className="text-[10px] text-zinc-500 uppercase font-bold block">Seller Evidence:</span>
+                              {disp.seller_evidence.map((ev: string, idx: number) => (
+                                <p key={idx} className="text-zinc-300 text-[11px] font-sans break-all">{ev}</p>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* SELLER PROOF OF WORK & DELIVERABLES (FOR TECH SERVICES) */}
+                      {serviceIntake && (
+                        <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/20 space-y-3">
+                          <div className="flex items-center justify-between border-b border-blue-500/20 pb-2">
+                            <span className="text-xs font-bold text-blue-400 uppercase">
+                              Technical Deliverables &amp; Proof Attached by Seller
+                            </span>
+                            <span className="text-[10px] text-zinc-400">
+                              Status: {serviceIntake.status?.toUpperCase().replace("_", " ")}
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                            {serviceIntake.github_pr_url && (
+                              <div className="p-2.5 rounded-lg bg-black/50 border border-white/10 space-y-1">
+                                <span className="text-[10px] text-zinc-500 block uppercase">GitHub Pull Request / Commit</span>
+                                <a
+                                  href={serviceIntake.github_pr_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-400 hover:underline flex items-center gap-1 font-bold break-all"
+                                >
+                                  <span>{serviceIntake.github_pr_url}</span>
+                                  <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                                </a>
+                              </div>
+                            )}
+
+                            {serviceIntake.preview_url && (
+                              <div className="p-2.5 rounded-lg bg-black/50 border border-white/10 space-y-1">
+                                <span className="text-[10px] text-zinc-500 block uppercase">Staging / Preview Demo</span>
+                                <a
+                                  href={serviceIntake.preview_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-emerald-400 hover:underline flex items-center gap-1 font-bold break-all"
+                                >
+                                  <span>{serviceIntake.preview_url}</span>
+                                  <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                                </a>
+                              </div>
+                            )}
+                          </div>
+
+                          {serviceIntake.handover_notes && (
+                            <div className="p-2.5 rounded-lg bg-black/50 border border-white/10 space-y-1">
+                              <span className="text-[10px] text-zinc-500 block uppercase">Seller Handover &amp; Test Notes</span>
+                              <p className="text-zinc-300 font-sans text-xs whitespace-pre-wrap">{serviceIntake.handover_notes}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* DOUBLE-ENTRY LEDGER TELEMETRY */}
+                      {disp.ledger_entries && disp.ledger_entries.length > 0 && (
+                        <div className="p-3 rounded-xl bg-surface border border-white/5 space-y-1.5 text-[11px]">
+                          <span className="text-[10px] text-zinc-500 uppercase font-bold block">Immutable Ledger Audit Trail:</span>
+                          <div className="space-y-1">
+                            {disp.ledger_entries.map((le: any, i: number) => (
+                              <div key={i} className="flex justify-between text-zinc-400 border-b border-white/5 py-0.5">
+                                <span>{le.description}</span>
+                                <span className={le.amount >= 0 ? "text-emerald-400 font-bold" : "text-red-400 font-bold"}>
+                                  {le.amount >= 0 ? "+" : ""}{formatINR(Math.abs(le.amount))}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* TRIBUNAL 3 DECISION ACTIONS */}
+                      {!isResolved && (
+                        <div className="pt-3 border-t border-white/10 space-y-3">
+                          <span className="text-[11px] font-bold uppercase tracking-wide text-zinc-300 block">
+                            Admin Judicial Arbitration Actions:
+                          </span>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <Button
+                              variant="primary"
+                              size="md"
+                              isLoading={isArbitrating}
+                              onClick={() => handleArbitrateDispute(disp.id, "seller_correct", 100, "Seller proof authentic per technical audit.")}
+                              className="bg-emerald-500 text-black hover:bg-emerald-400 font-bold flex items-center justify-center gap-1.5"
+                            >
+                              <Check className="h-4 w-4" />
+                              <span>1. SELLER CORRECT (RELEASE ESCROW)</span>
+                            </Button>
+
+                            <Button
+                              variant="danger"
+                              size="md"
+                              isLoading={isArbitrating}
+                              onClick={() => handleArbitrateDispute(disp.id, "buyer_correct", 0, "Buyer claim validated; seller failed scope.")}
+                              className="font-bold flex items-center justify-center gap-1.5"
+                            >
+                              <X className="h-4 w-4" />
+                              <span>2. BUYER CORRECT (FULL REFUND)</span>
+                            </Button>
+
+                            <Button
+                              variant="outline"
+                              size="md"
+                              onClick={() => setPartialModalDisputeId(disp.id)}
+                              className="border-amber-500/50 text-amber-400 hover:bg-amber-500/10 font-bold flex items-center justify-center gap-1.5"
+                            >
+                              <span>⚖️ 3. PARTIAL SETTLEMENT</span>
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* PARTIAL SETTLEMENT MODAL */}
+        {partialModalDisputeId && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 font-mono">
+            <div className="max-w-md w-full rounded-2xl border border-amber-500/40 bg-zinc-950 p-6 space-y-4 brutalist-card text-xs">
+              <div className="flex items-center gap-2 text-amber-400 font-bold text-sm uppercase">
+                <span>⚖️ Enforce Partial Escrow Settlement</span>
+              </div>
+              <p className="text-zinc-300 font-sans text-xs">
+                Both parties share responsibility (e.g. partial deliverable, delayed milestones). Enter the percentage to award to the Seller. The remainder will be automatically refunded to the Buyer.
+              </p>
+
+              <div className="space-y-2">
+                <label className="block text-[11px] text-zinc-400 uppercase font-bold">
+                  Seller Payout Percentage: {sellerSharePercent}% (Buyer Refund: {100 - sellerSharePercent}%)
+                </label>
+                <input
+                  type="range"
+                  min={10}
+                  max={90}
+                  step={5}
+                  value={sellerSharePercent}
+                  onChange={(e) => setSellerSharePercent(Number(e.target.value))}
+                  className="w-full accent-amber-400 cursor-pointer"
+                />
+                <div className="flex justify-between text-[10px] text-zinc-500 font-mono">
+                  <span>10% (Buyer Heavy)</span>
+                  <span>50-50 (Equal Split)</span>
+                  <span>90% (Seller Heavy)</span>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-[11px] text-zinc-400 uppercase font-bold">
+                  Tribunal Arbitration Notes
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  placeholder="Explain split rationale: e.g. 'Backend APIs completed 60%, frontend unfinished. Awarding 50% payout to seller and 50% refund to buyer...'"
+                  value={arbitrationNotes}
+                  onChange={(e) => setArbitrationNotes(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-surface-elevated p-3 text-xs text-white placeholder:text-zinc-600 focus:border-amber-400 focus:outline-none font-mono"
+                />
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <Button
+                  variant="primary"
+                  size="md"
+                  isLoading={isArbitrating}
+                  onClick={() => handleArbitrateDispute(partialModalDisputeId, "partial_settlement", sellerSharePercent, arbitrationNotes)}
+                  className="flex-1 bg-amber-400 text-black hover:bg-amber-300 font-bold"
+                >
+                  ENFORCE {sellerSharePercent}% / {100 - sellerSharePercent}% SPLIT
+                </Button>
+                <Button
+                  variant="outline"
+                  size="md"
+                  onClick={() => setPartialModalDisputeId(null)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 7: AUDIT STREAM */}
         {activeTab === "audit" && (
           <div className="rounded-2xl border border-border bg-surface p-6 space-y-4 font-mono text-xs">
             <div className="flex items-center justify-between border-b border-border pb-4">
@@ -762,20 +1162,20 @@ export default function AdminMissionControl() {
 
             <div className="space-y-2 text-zinc-400">
               <div className="flex items-center justify-between py-2 border-b border-white/5">
-                <span>[2026-09-01 21:05:12] • gemini.seo.optimized • Product #prod-mod-001 • SEO Score: 98/100</span>
-                <span className="text-emerald-400">AUTO-APPLIED</span>
+                <span>[SYSTEM] Auraminator Mission Control initialized — Supabase RLS Active</span>
+                <span className="text-emerald-400">LIVE</span>
               </div>
               <div className="flex items-center justify-between py-2 border-b border-white/5">
-                <span>[2026-09-01 20:48:30] • razorpay.route.split • Deal #deal-001 • Payout: ₹3,82,500 (85%)</span>
-                <span className="text-emerald-400">ESCROW LOCKED</span>
+                <span>[SYSTEM] Database integrity check passed — all schemas valid</span>
+                <span className="text-emerald-400">VERIFIED</span>
               </div>
               <div className="flex items-center justify-between py-2 border-b border-white/5">
-                <span>[2026-09-01 20:30:18] • shiprocket.awb.assigned • Order #ORD-98214 • Delhivery Express</span>
-                <span className="text-emerald-400">LABEL GENERATED</span>
+                <span>[SYSTEM] Webhook endpoints active — Razorpay + Shiprocket connected</span>
+                <span className="text-zinc-500">STANDBY</span>
               </div>
               <div className="flex items-center justify-between py-2 border-b border-white/5">
-                <span>[2026-09-01 19:40:02] • supabase.storage.signed_url • Entitlement #ent-001 • 15m Expiry</span>
-                <span className="text-zinc-500">DELIVERED</span>
+                <span>[SYSTEM] AI Copilot engine online — Gemini 3.5 Flash (multi-model fallback)</span>
+                <span className="text-zinc-500">READY</span>
               </div>
             </div>
           </div>

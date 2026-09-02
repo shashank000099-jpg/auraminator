@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ShieldCheck, Lock, ArrowRight, AlertCircle, Eye, EyeOff, Terminal, Key } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AuraminatorLogo, AuraminatorIcon } from "@/components/brand-logo";
+import { createClientSupabase } from "@/lib/supabase/client";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -23,29 +24,55 @@ export default function AdminLoginPage() {
     }
   }, [router]);
 
-  const handleAdminLogin = (e: React.FormEvent) => {
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
 
-    // Master Root Admin Credential Verification
-    const MASTER_ADMIN_EMAIL = "shashank000099@gmail.com";
-    const MASTER_ADMIN_PASS = "469087383207";
+    try {
+      const supabase = createClientSupabase();
+      const { data, error: signInErr } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password.trim(),
+      });
 
-    setTimeout(() => {
-      if (
-        email.trim().toLowerCase() === MASTER_ADMIN_EMAIL.toLowerCase() &&
-        password.trim() === MASTER_ADMIN_PASS
-      ) {
-        localStorage.setItem("auraminator_admin_authenticated", "true");
-        localStorage.setItem("auraminator_admin_email", email.trim());
-        localStorage.setItem("auraminator_admin_session_time", new Date().toISOString());
-        router.push("/admin/dashboard");
-      } else {
-        setError("Invalid Master Admin Credentials. Access Denied.");
+      if (signInErr) {
+        setError(signInErr.message);
         setIsLoading(false);
+        return;
       }
-    }, 400);
+
+      if (!data.user) {
+        setError("Login failed: User not found.");
+        setIsLoading(false);
+        return;
+      }
+
+      const { data: profile, error: profErr } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", data.user.id)
+        .single();
+
+      if (profErr || profile?.role !== "admin") {
+        if (email.trim().toLowerCase() === "shashank000099@gmail.com") {
+          await supabase.from("profiles").update({ role: "admin" }).eq("id", data.user.id);
+        } else {
+          await supabase.auth.signOut();
+          setError("UNAUTHORIZED: Your account does not have Admin privileges.");
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      localStorage.setItem("auraminator_admin_authenticated", "true");
+      localStorage.setItem("auraminator_admin_email", email.trim());
+      localStorage.setItem("auraminator_admin_session_time", new Date().toISOString());
+      router.push("/admin/dashboard");
+    } catch (err: any) {
+      setError(err.message || "An error occurred during admin authentication.");
+      setIsLoading(false);
+    }
   };
 
   return (

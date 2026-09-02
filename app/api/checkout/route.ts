@@ -25,7 +25,15 @@ export async function POST(req: NextRequest) {
     const supabase = createServerSupabase();
     const { data: { user } } = await supabase.auth.getUser();
 
-    const buyerId = user?.id || "demo-buyer-uuid-0001";
+    // Checkout requires authentication for order tracking and entitlements
+    if (!user) {
+      return NextResponse.json(
+        { error: "Please sign in to complete your purchase." },
+        { status: 401 }
+      );
+    }
+
+    const buyerId = user.id;
     const anonSessionId = sessionId || `sess_${uuidv4().substring(0, 8)}`;
 
     // 1. Concurrency Reservation for Physical Items via Supabase RPC
@@ -89,9 +97,12 @@ export async function POST(req: NextRequest) {
       discountAmount = Math.round(itemsSubtotal * 0.1);
     }
 
-    const hasPhysicalItems = items.some((i: CheckoutItem) => i.productType === "physical");
-    // Buyer pays shipping fee (₹149 for physical courier delivery, ₹0 for digital/services)
-    const shippingFee = body.shippingFee !== undefined ? body.shippingFee : (hasPhysicalItems ? 149 : 0);
+    const physicalSellersCount = new Set(
+      items.filter((i: CheckoutItem) => i.productType === "physical" && i.sellerId).map((i: CheckoutItem) => i.sellerId)
+    ).size;
+    // Buyer pays shipping fee (₹149 per seller parcel for physical delivery, ₹0 for digital/services)
+    const defaultShipping = physicalSellersCount > 0 ? physicalSellersCount * 149 : 0;
+    const shippingFee = body.shippingFee !== undefined ? body.shippingFee : defaultShipping;
     const discountedBase = Math.max(0, itemsSubtotal - discountAmount);
     // Buyer pays Razorpay 2.36% Gateway Fee (2% + 18% GST)
     const gatewayFee = body.gatewayFee !== undefined ? body.gatewayFee : Math.round((discountedBase + shippingFee) * 0.0236);

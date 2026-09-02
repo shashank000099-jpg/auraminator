@@ -373,6 +373,20 @@ export class EscrowStateMachine {
       .update({ status: "revoked" })
       .eq("order_id", orderId);
 
+    // 4B. Reverse seller pending escrow balances in double-entry ledger so pendingEscrow decrements
+    for (const item of items) {
+      if (item.seller_id && item.seller_share) {
+        await supabase.from("ledger_entries").insert({
+          seller_id: item.seller_id,
+          order_id: orderId,
+          entry_type: "reversal_escrow",
+          amount: -Math.abs(item.seller_share),
+          balance_type: "pending",
+          description: `Order #${orderId.slice(0, 8)} cancelled by ${cancelledBy}. Pending escrow reversed.`,
+        });
+      }
+    }
+
     // 5. SHIPROCKET CANCEL: Cancel active courier pickup bookings & manifests
     const { data: activeShipments } = await supabase
       .from("shipments")
@@ -511,6 +525,112 @@ export class EscrowStateMachine {
         message: `Refund dispatch failed: ${refundErr.message}. Flagged for manual admin review.`,
       };
     }
+  }
+
+  /**
+   * 4B. REFUND RECOVERY & RETRY PIPELINE
+   * Retries failed Razorpay refunds idempotently or allows manual banking settlement override.
+   */
+  static async retryRefund(params: {
+    orderId: string;
+    adminId?: string;
+  }): Promise<EscrowTransitionResult> {
+    const supabase = createServerSupabase();
+    const { orderId } = params;
+
+    const { data: payout } = await supabase
+      .from("payouts")
+      .select("*")
+      .eq("order_id", orderId)
+      .single();
+
+    if (payout?.escrow_state === "REFUND_COMPLETED") {
+      return {
+        success: true,
+        currentState: "REFUND_COMPLETED",
+        message: "Idempotent check: Refund already marked completed.",
+      };
+    }
+
+    const { data: order } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("id", orderId)
+      .single();
+
+    if (!order || !order.gateway_payment_id) {
+      return {
+        success: false,
+        currentState: "REFUND_FAILED",
+        message: "Order or gateway payment ID not found for retry.",
+      };
+    }
+
+    return await this.processRefundToBuyer({
+      orderId,
+      buyerId: order.buyer_id,
+      amount: Number(order.total_amount),
+      reason: "Admin triggered refund retry after gateway failure.",
+      paymentId: order.gateway_payment_id,
+    });
+  }
+
+  /**
+   * 4C. MANUAL BANK SETTLEMENT OVERRIDE (NEFT/IMPS/UPI UTR)
+   * If automated gateway refund fails permanently, admin settles offline and records immutable proof.
+   */
+  static async resolveFailedRefundManually(params: {
+    orderId: string;
+    utrNumber: string;
+    notes: string;
+    adminEmail: string;
+  }): Promise<EscrowTransitionResult> {
+    const supabase = createServerSupabase();
+    const { orderId, utrNumber, notes, adminEmail } = params;
+
+    const { data: order } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("id", orderId)
+      .single();
+
+    if (!order) {
+      return { success: false, currentState: "REFUND_FAILED", message: "Order not found" };
+    }
+
+    // Record manual refund in double-entry ledger
+    await supabase.from("ledger_entries").insert({
+      seller_id: order.buyer_id,
+      order_id: orderId,
+      entry_type: "debit_refund",
+      amount: -Math.abs(Number(order.total_amount)),
+      balance_type: "available",
+      description: `MANUAL BANK SETTLEMENT by Admin (${adminEmail}). UTR: ${utrNumber}. Notes: ${notes}. REFUND_COMPLETED.`,
+    });
+
+    // Update payout state
+    await supabase
+      .from("payouts")
+      .update({
+        escrow_state: "REFUND_COMPLETED",
+        status: "completed",
+        gateway_transfer_id: `manual_utr_${utrNumber}`,
+        settled_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("order_id", orderId);
+
+    await supabase
+      .from("orders")
+      .update({ status: "refunded", updated_at: new Date().toISOString() })
+      .eq("id", orderId);
+
+    return {
+      success: true,
+      previousState: "REFUND_FAILED",
+      currentState: "REFUND_COMPLETED",
+      message: `Manual settlement of ₹${order.total_amount} recorded with UTR [${utrNumber}]. Order status updated to refunded.`,
+    };
   }
 
   /**
