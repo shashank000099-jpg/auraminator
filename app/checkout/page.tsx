@@ -34,10 +34,51 @@ export default function CheckoutPage() {
   const subtotal = getTotalAmount();
   const hasPhysicalItems = items.some((item) => item.product.product_type === "physical");
   
-  // Buyer Pays Shipping & Razorpay Gateway Fee
-  const shippingFee = hasPhysicalItems ? 149 : 0; // ₹149 Tracked Courier for physical streetwear, ₹0 for digital/services
+  // Dynamic Real-Time Shipping Calculation from Seller Origin PIN to Buyer Delivery PIN
+  const [shippingFee, setShippingFee] = useState(hasPhysicalItems ? 149 : 0);
+  const [courierName, setCourierName] = useState("Delhivery Surface Express");
+  const [etdDays, setEtdDays] = useState(3);
+  const [isCalculatingShipping, setIsCalculatingShipping] = useState(false);
+
+  React.useEffect(() => {
+    if (!hasPhysicalItems) {
+      setShippingFee(0);
+      return;
+    }
+
+    if (postalCode && postalCode.length === 6) {
+      setIsCalculatingShipping(true);
+      const firstPhysicalItem = items.find((i) => i.product.product_type === "physical");
+      const sellerId = firstPhysicalItem?.product.seller_id;
+
+      fetch("/api/shipping/calculate-rate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sellerId,
+          destinationPincode: postalCode,
+          weightInKg: 0.85,
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.rate !== undefined) {
+            setShippingFee(data.rate);
+            if (data.courier_name) setCourierName(data.courier_name);
+            if (data.etd_days) setEtdDays(data.etd_days);
+          }
+        })
+        .catch(() => {
+          setShippingFee(149);
+        })
+        .finally(() => {
+          setIsCalculatingShipping(false);
+        });
+    }
+  }, [postalCode, hasPhysicalItems, items]);
+
   const discountedSubtotal = Math.max(0, subtotal - appliedDiscount);
-  // Razorpay Gateway Fee: 2% + 18% GST = 2.36%
+  // Razorpay Gateway Fee: 2% + 18% GST = 2.36% (Buyer Paid)
   const gatewayFee = Math.round((discountedSubtotal + shippingFee) * 0.0236);
   const finalTotal = discountedSubtotal + shippingFee + gatewayFee;
 
@@ -334,12 +375,19 @@ export default function CheckoutPage() {
                 )}
 
                 <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-1.5">
-                    <Truck className="h-3.5 w-3.5 text-zinc-400" />
-                    <span>Shipping &amp; Delivery (Courier)</span>
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-1.5">
+                      <Truck className="h-3.5 w-3.5 text-zinc-400" />
+                      <span>Tracked Courier Delivery</span>
+                    </div>
+                    {hasPhysicalItems && (
+                      <span className="text-[10px] text-zinc-500 block font-mono">
+                        {isCalculatingShipping ? "Resolving fastest courier..." : `${courierName} • ~${etdDays} Days`}
+                      </span>
+                    )}
                   </div>
                   <span className={shippingFee > 0 ? "text-white font-bold" : "text-emerald-400 font-bold"}>
-                    {shippingFee > 0 ? formatINR(shippingFee) : "Free (Digital / Service)"}
+                    {hasPhysicalItems ? (isCalculatingShipping ? "..." : formatINR(shippingFee)) : "Free (Digital / Service)"}
                   </span>
                 </div>
 

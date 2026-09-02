@@ -499,92 +499,77 @@ export default function ProtectedDealRoomPage() {
               </div>
             )}
 
-            {/* UNLOCKED CONTACT DOSSIER FOR SERVICES (POST-ESCROW DEPOSIT) */}
-            {deal.product?.product_type === "service" && deal.escrow_status !== "awaiting_deposit" && (
+            {/* UNLOCKED CONTACT DOSSIER FOR HIGH-TICKET ASSETS, APPS, SOCIAL ACCOUNTS & TECH SERVICES (POST-ESCROW DEPOSIT) */}
+            {deal.escrow_status !== "awaiting_deposit" && (
               <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-6 space-y-4 brutalist-card">
                 <div className="flex items-center justify-between border-b border-emerald-500/20 pb-3">
                   <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase">
                     <ShieldCheck className="h-4 w-4" />
                     <span>
                       {activeRole === "seller"
-                        ? "CLIENT CONTACT DOSSIER UNLOCKED (REACH OUT TO BUYER)"
-                        : "ESCROW LOCKED • DEVELOPER DISPATCH IN PROGRESS"}
+                        ? "BUYER / CLIENT CONTACT DOSSIER UNLOCKED (REACH OUT DIRECTLY)"
+                        : "ESCROW LOCKED • 7-DAY TECHNICAL SUPPORT & WARRANTY ACTIVE"}
                     </span>
                   </div>
                   <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-mono font-bold">
-                    POST-PAYMENT ACTIVE
+                    ✓ 7-DAY WARRANTY ACTIVE
                   </span>
                 </div>
 
                 {activeRole === "seller" ? (
                   <>
                     <p className="text-xs text-zinc-300 font-sans leading-relaxed">
-                      Escrow of <strong className="text-white">{formatINR(deal.agreed_price)}</strong> is safely locked. As the service provider, you can now contact the buyer directly via WhatsApp/Call/Email to initiate the sprint and clarify technical requirements.
+                      Escrow payment of <strong className="text-white">{formatINR(deal.agreed_price)}</strong> is safely locked in Auraminator Escrow. As the seller/developer, you can now contact the buyer directly via Phone, WhatsApp, or Email to coordinate the live handover (Domain DNS, Apple/Google Play Console invite, GitHub repo transfer, Stripe/Social credentials) and provide the mandatory <strong>7-Day Post-Handover Warranty Support</strong>.
                     </p>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
                       <div className="rounded-lg border border-white/10 bg-black/50 p-3 space-y-1">
-                        <span className="text-zinc-500 text-[10px] uppercase font-bold block">Client Verified WhatsApp / Phone:</span>
+                        <span className="text-zinc-500 text-[10px] uppercase font-bold block">Buyer Verified WhatsApp / Phone:</span>
                         <a
-                          href="https://wa.me/919876512345"
+                          href="https://wa.me/919876543210"
                           target="_blank"
                           rel="noreferrer"
                           className="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1.5"
                         >
-                          <span>+91 98765 12345 (Alex Mercer)</span>
+                          <span>+91 98765 43210 (Alex Mercer)</span>
                           <ExternalLink className="h-3 w-3" />
                         </a>
                       </div>
 
                       <div className="rounded-lg border border-white/10 bg-black/50 p-3 space-y-1">
-                        <span className="text-zinc-500 text-[10px] uppercase font-bold block">Client Official Email:</span>
+                        <span className="text-zinc-500 text-[10px] uppercase font-bold block">Buyer Verified Email:</span>
                         <a
-                          href="mailto:alex.mercer@gmail.com"
+                          href="mailto:alex.mercer@auraminator.in"
                           className="text-white hover:text-emerald-400 font-bold break-all"
                         >
-                          alex.mercer@gmail.com
+                          alex.mercer@auraminator.in
                         </a>
                       </div>
                     </div>
 
-                    <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono">
-                      <span className="text-[11px] text-zinc-400">
-                        Submit PR deliverables in Seller Studio to claim 85% payout
+                    <div className="rounded-lg border border-white/10 bg-black/30 p-3 text-[11px] text-zinc-400 font-sans space-y-1">
+                      <span className="font-bold text-white uppercase text-[10px] block font-mono">
+                        🛡️ 7-Day Support Commitment:
                       </span>
-                      <Link href="/seller/services">
-                        <Button variant="outline" size="sm" className="flex items-center gap-1.5 border-emerald-500/30 text-emerald-400">
-                          <span>OPEN SELLER SERVICE QUEUE</span>
-                          <ArrowRight className="h-3.5 w-3.5" />
-                        </Button>
-                      </Link>
+                      <p>
+                        Funds remain safely in escrow during the 7-day handover &amp; warranty period. Once the buyer completes full verification and the 7 days elapse (or upon buyer early sign-off), 85% net payout is released to your linked bank account.
+                      </p>
                     </div>
                   </>
                 ) : (
                   <>
                     <p className="text-xs text-zinc-300 font-sans leading-relaxed">
-                      Your escrow payment of <strong className="text-white">{formatINR(deal.agreed_price)}</strong> is safely locked. Your verified contact details and project requirements have been securely delivered to <strong className="text-white">@{deal.seller?.username || "syntaxlabs"}</strong>.
+                      Your escrow payment of <strong className="text-white">{formatINR(deal.agreed_price)}</strong> is safely locked. Your verified contact details have been securely delivered to <strong className="text-white">@{deal.seller?.username || "syntaxlabs"}</strong>. The seller is required to assist you step-by-step with the transfer and provide <strong>7 Days Technical Support &amp; Warranty</strong>.
                     </p>
 
                     <div className="rounded-lg border border-white/10 bg-black/50 p-4 space-y-2 text-xs font-mono">
                       <div className="flex items-center gap-2 text-emerald-400 font-bold">
                         <Clock className="h-4 w-4 animate-spin" />
-                        <span>DEVELOPER HAS RECEIVED YOUR ORDER &amp; WILL CONTACT YOU DIRECTLY</span>
+                        <span>7-DAY ESCROW HOLD &amp; TECHNICAL WARRANTY PERIOD RUNNING</span>
                       </div>
                       <p className="text-[11px] text-zinc-400 font-sans">
-                        The developer will reach out to you directly via WhatsApp, Phone, or Email within the SLA window to coordinate the code fix / deliverable.
+                        If there are any domain transfer issues, source code bugs, or account access problems during these 7 days, your funds remain 100% protected and you can open a dispute.
                       </p>
-                    </div>
-
-                    <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono">
-                      <span className="text-[11px] text-zinc-400">
-                        Track Pull Request and release escrow when ready
-                      </span>
-                      <Link href="/account/services/SRV-94012">
-                        <Button variant="outline" size="sm" className="flex items-center gap-1.5 border-emerald-500/30 text-emerald-400">
-                          <span>VIEW SERVICE WORKSPACE</span>
-                          <ArrowRight className="h-3.5 w-3.5" />
-                        </Button>
-                      </Link>
                     </div>
                   </>
                 )}
@@ -675,20 +660,20 @@ export default function ProtectedDealRoomPage() {
             {/* STAGE 3 & 4: BUYER INSPECTION & VERIFICATION */}
             {(deal.escrow_status === "buyer_inspecting" || deal.escrow_status === "credentials_transferred") && (
               <div className="rounded-2xl border border-white/10 bg-surface p-6 space-y-6 brutalist-card">
-                {/* 48h Inspection Timer */}
+                {/* 7-Day Support & Warranty Escrow Timer */}
                 <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <Clock className="h-5 w-5 text-emerald-400 flex-shrink-0" />
                     <div>
-                      <span className="text-emerald-400 font-bold text-xs block">48-HOUR INSPECTION WINDOW ACTIVE</span>
+                      <span className="text-emerald-400 font-bold text-xs block">7-DAY SUPPORT &amp; WARRANTY WINDOW ACTIVE (168 HOURS)</span>
                       <span className="text-[11px] text-zinc-400 font-sans">
-                        Verify domain control, source code, database access, and Stripe revenues.
+                        Verify domain control, source code, server databases, and social credentials. 7-day seller warranty protection active.
                       </span>
                     </div>
                   </div>
                   <div className="text-left sm:text-right font-mono">
-                    <span className="text-xs text-zinc-500 block">TIME REMAINING</span>
-                    <span className="text-sm font-bold text-white">41h : 24m : 18s</span>
+                    <span className="text-xs text-zinc-500 block">WARRANTY TIME REMAINING</span>
+                    <span className="text-sm font-bold text-white">6d : 18h : 42m</span>
                   </div>
                 </div>
 

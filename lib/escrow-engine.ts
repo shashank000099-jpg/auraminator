@@ -1,5 +1,6 @@
 import { createServerSupabase } from "@/lib/supabase/server";
 import { razorpay } from "@/lib/razorpay";
+import { shiprocket } from "@/lib/shiprocket";
 
 export type EscrowFsmState =
   | "ESCROW_PENDING"
@@ -267,17 +268,70 @@ export class EscrowStateMachine {
       };
     }
 
-    // Check if order is already fulfilled/shipped
-    const hasShippedItems = (order.order_items || []).some(
-      (item: any) => ["shipped", "delivered"].includes(item.fulfillment_status)
-    );
+    // SERVER-SIDE CATEGORY-SPECIFIC INVARIANT EVALUATION (ZERO-TRUST)
+    const items = order.order_items || [];
 
-    if (hasShippedItems && cancelledBy !== "admin") {
-      return {
-        success: false,
-        currentState: "ESCROW_PENDING",
-        message: "Order cannot be instantly cancelled after dispatch. Please open a return request or dispute.",
-      };
+    // RULE 1: DIGITAL ASSETS (No instant cancellation once access token/download unlocked)
+    const hasDigitalItems = items.some((i: any) =>
+      ["digital_file", "digital_link", "saas", "source_code"].includes(i.product_type)
+    );
+    if (hasDigitalItems && cancelledBy === "buyer") {
+      // Check if buyer has already accessed/downloaded from database
+      const { data: entitlements } = await supabase
+        .from("entitlements")
+        .select("download_count, status")
+        .eq("order_id", orderId);
+
+      const hasAccessed = entitlements && entitlements.some((e: any) => (e.download_count || 0) > 0 || e.status === "active");
+      if (hasAccessed) {
+        return {
+          success: false,
+          currentState: "ESCROW_PENDING",
+          failureCode: "DIGITAL_ALREADY_ACCESSED",
+          message: "POLICY_VIOLATION: Digital asset access token has already been issued/accessed. Instant cancellation is strictly blocked. Please submit a dispute for refund arbitration.",
+        };
+      }
+    }
+
+    // RULE 2: PHYSICAL PRODUCTS (Allowed ONLY before handover to courier)
+    const hasPhysicalItems = items.some((item: any) => item.product_type === "physical");
+    if (hasPhysicalItems && cancelledBy === "buyer") {
+      const { data: shipments } = await supabase
+        .from("shipments")
+        .select("tracking_status")
+        .eq("order_id", orderId);
+
+      const isDispatched = shipments && shipments.some((s: any) =>
+        ["in_transit", "out_for_delivery", "delivered"].includes(s.tracking_status)
+      );
+
+      if (isDispatched) {
+        return {
+          success: false,
+          currentState: "ESCROW_PENDING",
+          failureCode: "PHYSICAL_ALREADY_HANDED_OVER",
+          message: "POLICY_VIOLATION: Physical package has already been handed over to the courier (Delhivery / BlueDart). Direct cancellation is blocked; please initiate a return upon delivery.",
+        };
+      }
+    }
+
+    // RULE 3: TECH SERVICES (Allowed only if seller has not started work)
+    const hasServiceItems = items.some((i: any) => i.product_type === "service");
+    if (hasServiceItems && cancelledBy === "buyer") {
+      const { data: serviceIntake } = await supabase
+        .from("service_intakes")
+        .select("status")
+        .eq("order_id", orderId)
+        .single();
+
+      if (serviceIntake && ["in_progress", "deliverable_submitted", "completed"].includes(serviceIntake.status)) {
+        return {
+          success: false,
+          currentState: "ESCROW_PENDING",
+          failureCode: "SERVICE_ALREADY_IN_PROGRESS",
+          message: "POLICY_VIOLATION: Service work is already in-progress by the creator. Direct cancellation is blocked; please open a milestone dispute for mutual review.",
+        };
+      }
     }
 
     // 1. Block Payout on all seller payout records for this order
@@ -319,7 +373,42 @@ export class EscrowStateMachine {
       .update({ status: "revoked" })
       .eq("order_id", orderId);
 
-    // 5. Trigger Stage: REFUND_INITIATED to Buyer via Razorpay
+    // 5. SHIPROCKET CANCEL: Cancel active courier pickup bookings & manifests
+    const { data: activeShipments } = await supabase
+      .from("shipments")
+      .select("*")
+      .eq("order_id", orderId);
+
+    if (activeShipments && activeShipments.length > 0) {
+      for (const shipment of activeShipments) {
+        try {
+          if (shipment.shiprocket_order_id) {
+            await shiprocket.cancelOrder([shipment.shiprocket_order_id]);
+          } else if (shipment.awb_code) {
+            await shiprocket.cancelShipmentByAwb([shipment.awb_code]);
+          }
+
+          await supabase
+            .from("shipments")
+            .update({
+              tracking_status: "rto_initiated",
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", shipment.id);
+
+          await supabase.from("shipment_events").insert({
+            shipment_id: shipment.id,
+            status: "cancelled",
+            location: "Courier Pickup Cancelled",
+            raw_payload: { reason: `Order cancelled by ${cancelledBy}: ${reason}` },
+          });
+        } catch (srErr: any) {
+          console.error("[-] Shiprocket cancellation notice:", srErr.message);
+        }
+      }
+    }
+
+    // 6. Trigger Stage: REFUND_INITIATED to Buyer via Razorpay
     const refundRes = await this.processRefundToBuyer({
       orderId,
       buyerId: order.buyer_id,

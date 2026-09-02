@@ -105,6 +105,19 @@ export async function POST(req: NextRequest) {
             if (item.product_type === "physical" && item.variant_id) {
               await supabase.rpc("commit_inventory", { p_reservation_id: item.id });
             }
+
+            // D. Initialize Service Intake Vault for Tech Services
+            if (item.product_type === "service") {
+              await supabase.from("service_intakes").insert({
+                order_id: order.id,
+                order_item_id: item.id,
+                buyer_id: order.buyer_id,
+                seller_id: item.seller_id,
+                requirements: "Client requirements intake pending",
+                delivery_sla_days: 3,
+                status: "intake_pending",
+              });
+            }
           }
         }
       }

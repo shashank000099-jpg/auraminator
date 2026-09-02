@@ -186,9 +186,16 @@ export default function OrderDetailsPage() {
           {!cancelResult && (
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-6">
               <div className="space-y-1">
-                <h3 className="font-bold text-white text-sm">Need to Cancel this Order?</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-bold text-white text-sm">Need to Cancel this Order?</h3>
+                  <span className="text-[10px] bg-white/10 text-zinc-300 px-2 py-0.5 rounded uppercase">
+                    BEFORE HANDOVER POLICY
+                  </span>
+                </div>
                 <p className="text-xs text-zinc-400 font-sans">
-                  Instantly cancel and block seller payout. Full refund will be dispatched to your account.
+                  • <strong>Physical</strong>: Instant cancel &amp; refund allowed before courier handover.<br />
+                  • <strong>Digital</strong>: Instant cancel disabled after access token unlocked (Use Dispute).<br />
+                  • <strong>Services</strong>: Allowed before creator begins in-progress development.
                 </p>
               </div>
 

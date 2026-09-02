@@ -64,11 +64,17 @@ export function Footer() {
         <div className="mt-12 border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-zinc-600">
           <p>© {new Date().getFullYear()} AURAMINATOR.IN • ALL RIGHTS RESERVED.</p>
           <div className="flex items-center gap-4">
-            <span className="hover:text-zinc-400 cursor-pointer">PRIVACY PROTOCOL</span>
+            <Link href="/privacy" className="hover:text-zinc-400 transition-colors">
+              PRIVACY PROTOCOL
+            </Link>
             <span>•</span>
-            <span className="hover:text-zinc-400 cursor-pointer">TERMS OF COMMERCE</span>
+            <Link href="/terms" className="hover:text-zinc-400 transition-colors">
+              TERMS OF COMMERCE
+            </Link>
             <span>•</span>
-            <span className="hover:text-zinc-400 cursor-pointer">ESCROW ARBITRATION</span>
+            <Link href="/disclaimer" className="hover:text-zinc-400 transition-colors">
+              ESCROW ARBITRATION &amp; DISCLAIMER
+            </Link>
           </div>
         </div>
       </div>
