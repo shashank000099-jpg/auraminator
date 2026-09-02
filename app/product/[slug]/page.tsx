@@ -665,6 +665,55 @@ export default function ProductDetailPage() {
           </div>
         </div>
       )}
+
+      {/* MOBILE STICKY FLOATING BUY & OFFER ACTION BAR */}
+      <div className="fixed bottom-0 inset-x-0 z-30 md:hidden border-t border-white/15 bg-zinc-950/90 backdrop-blur-xl p-3 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] shadow-[0_-10px_30px_rgba(0,0,0,0.95)]">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <span className="text-[10px] font-mono text-zinc-400 block truncate">
+              {product.title}
+            </span>
+            <div className="flex items-baseline gap-1.5 font-mono">
+              <span className="text-base font-black text-white">{formatINR(currentPrice)}</span>
+              {isDigitalAssetOrSaaS && (
+                <span className="text-[9px] text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.2 rounded">
+                  ESCROW
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {isDigitalAssetOrSaaS && (
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    if ("vibrate" in navigator) navigator.vibrate(15);
+                  } catch {}
+                  setIsOfferModalOpen(true);
+                }}
+                className="px-3.5 py-2.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 text-xs font-mono font-bold active:scale-95 transition"
+              >
+                OFFER
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                try {
+                  if ("vibrate" in navigator) navigator.vibrate(20);
+                } catch {}
+                handleClaim();
+              }}
+              className="px-4 py-2.5 rounded-xl bg-white text-black text-xs font-mono font-bold active:scale-95 transition shadow-[0_0_15px_rgba(255,255,255,0.3)]"
+            >
+              {isDigitalAssetOrSaaS ? "CLAIM ASSET" : "ADD TO CART"}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

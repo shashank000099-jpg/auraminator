@@ -1,8 +1,18 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { CartDrawer } from "@/components/cart-drawer";
+import { AuthProvider } from "@/lib/context/auth-context";
+import { AppLaunchSplash } from "@/components/app-launch-splash";
+import { MobileBottomDock } from "@/components/mobile-bottom-dock";
+
+export const viewport: Viewport = {
+  themeColor: "#000000",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://auraminator.in"),
@@ -91,12 +101,8 @@ export const metadata: Metadata = {
     "DC.title": "AURAMINATOR",
     "DC.creator": "Auraminator Protocol",
     "DC.language": "en",
-    "theme-color": "#000000",
   },
 };
-
-import { AuthProvider } from "@/lib/context/auth-context";
-import { AppLaunchSplash } from "@/components/app-launch-splash";
 
 export default function RootLayout({
   children,
@@ -144,18 +150,24 @@ export default function RootLayout({
         <link rel="alternate icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon" />
         <link rel="manifest" href="/manifest.webmanifest" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Auraminator" />
+        <meta name="format-detection" content="telephone=no" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(globalSchemaJsonLd) }}
         />
       </head>
-      <body className="min-h-screen bg-black text-white selection:bg-white selection:text-black flex flex-col justify-between">
+      <body className="min-h-screen bg-black text-white selection:bg-white selection:text-black flex flex-col justify-between pb-24 md:pb-0 overscroll-none select-none">
         <AuthProvider>
           <AppLaunchSplash />
           <Navbar />
           <main className="flex-1">{children}</main>
           <Footer />
           <CartDrawer />
+          <MobileBottomDock />
         </AuthProvider>
       </body>
     </html>

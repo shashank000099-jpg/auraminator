@@ -77,14 +77,20 @@ export function Navbar() {
           </div>
 
           {/* Right Action Icons */}
-          <div className="flex items-center gap-3">
-            {/* AI Copilot Button */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* AI Copilot Button - Mobile & Desktop */}
             <button
-              onClick={() => setIsCopilotOpen(true)}
-              className="hidden sm:inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-surface px-3 py-1.5 text-[11px] font-mono text-zinc-300 hover:border-white/30 hover:text-white transition-all duration-200"
+              onClick={() => {
+                try {
+                  if ("vibrate" in navigator) navigator.vibrate(12);
+                } catch {}
+                setIsCopilotOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-surface px-2.5 py-1 text-[11px] font-mono text-zinc-300 hover:border-white/40 hover:text-white transition-all duration-150 active:scale-95"
             >
-              <Sparkles className="h-3 w-3 text-white" />
-              <span>AI COPILOT</span>
+              <Sparkles className="h-3 w-3 text-emerald-400" />
+              <span className="hidden sm:inline">AI COPILOT</span>
+              <span className="sm:hidden text-[10px] font-bold text-white">AI</span>
             </button>
 
             {/* Admin link */}
@@ -101,7 +107,7 @@ export function Navbar() {
               <div className="relative">
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center gap-2 rounded-lg border border-border bg-surface px-2.5 py-1 text-xs font-mono text-white hover:border-white/40 transition-colors"
+                  className="flex items-center gap-2 rounded-lg border border-border bg-surface px-2.5 py-1 text-xs font-mono text-white hover:border-white/40 transition-colors active:scale-95"
                 >
                   <div className="h-4 w-4 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center text-[10px] font-bold">
                     {user.fullName.charAt(0).toUpperCase()}
@@ -165,16 +171,16 @@ export function Navbar() {
                 )}
               </div>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <Link
                   href="/auth/login"
-                  className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-mono text-zinc-300 hover:text-white hover:border-white/40 transition-colors"
+                  className="rounded-lg border border-border bg-surface px-2.5 py-1 text-xs font-mono text-zinc-300 hover:text-white hover:border-white/40 transition-colors active:scale-95"
                 >
                   SIGN IN
                 </Link>
                 <Link
                   href="/auth/signup"
-                  className="hidden sm:inline-flex rounded-lg border border-white bg-white px-3 py-1.5 text-xs font-mono text-black font-bold hover:bg-zinc-200 transition-colors"
+                  className="hidden sm:inline-flex rounded-lg border border-white bg-white px-3 py-1.5 text-xs font-mono text-black font-bold hover:bg-zinc-200 transition-colors active:scale-95"
                 >
                   JOIN
                 </Link>
@@ -183,13 +189,18 @@ export function Navbar() {
 
             {/* Cart Drawer Trigger */}
             <button
-              onClick={openCart}
-              className="relative flex items-center justify-center rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-mono text-white hover:border-white/40 transition-colors"
+              onClick={() => {
+                try {
+                  if ("vibrate" in navigator) navigator.vibrate(12);
+                } catch {}
+                openCart();
+              }}
+              className="relative flex items-center justify-center rounded-lg border border-border bg-surface px-2.5 py-1 text-xs font-mono text-white hover:border-white/40 transition-colors active:scale-95"
             >
-              <ShoppingBag className="h-3.5 w-3.5 mr-1.5" />
-              <span>CART</span>
+              <ShoppingBag className="h-3.5 w-3.5 sm:mr-1.5" />
+              <span className="hidden sm:inline">CART</span>
               {totalItems > 0 && (
-                <span className="ml-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-white px-1 text-[10px] font-bold text-black">
+                <span className="ml-1 sm:ml-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-white px-1 text-[10px] font-bold text-black">
                   {totalItems}
                 </span>
               )}
@@ -197,8 +208,13 @@ export function Navbar() {
 
             {/* Mobile Menu Button */}
             <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-1.5 text-zinc-400 hover:text-white md:hidden"
+              onClick={() => {
+                try {
+                  if ("vibrate" in navigator) navigator.vibrate(10);
+                } catch {}
+                setIsMobileMenuOpen(!isMobileMenuOpen);
+              }}
+              className="p-1.5 text-zinc-400 hover:text-white md:hidden active:scale-95"
               aria-label="Toggle mobile menu"
             >
               {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}

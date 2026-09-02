@@ -72,23 +72,28 @@ function ExploreContent() {
             />
           </div>
 
-          <div className="flex items-center gap-2 w-full md:w-auto font-mono text-xs overflow-x-auto pb-2 md:pb-0">
+          <div className="flex items-center gap-2 w-full md:w-auto font-mono text-xs overflow-x-auto scrollbar-none pb-2 md:pb-0">
             {/* Category pills */}
             {[
               { id: "all", label: "ALL ASSETS" },
-              { id: "saas", label: "APPS & SAAS" },
-              { id: "source_code", label: "SOURCE CODE IP" },
-              { id: "social_account", label: "SOCIAL ACCOUNTS" },
-              { id: "physical", label: "STREETWEAR" },
-              { id: "service", label: "TECH SERVICES" },
-              { id: "digital_file", label: "DIGITAL VAULTS" },
+              { id: "saas", label: "⚡ APPS & SAAS" },
+              { id: "source_code", label: "💻 CODE IP" },
+              { id: "social_account", label: "🌐 SOCIAL CHANNELS" },
+              { id: "physical", label: "👕 STREETWEAR" },
+              { id: "service", label: "🛠️ SERVICES" },
+              { id: "digital_file", label: "💎 3D VAULTS" },
             ].map((type) => (
               <button
                 key={type.id}
-                onClick={() => setSelectedType(type.id)}
-                className={`whitespace-nowrap rounded-lg border px-3 py-2 transition-all ${
+                onClick={() => {
+                  try {
+                    if ("vibrate" in navigator) navigator.vibrate(10);
+                  } catch {}
+                  setSelectedType(type.id);
+                }}
+                className={`whitespace-nowrap rounded-xl border px-3.5 py-2 transition-all active:scale-95 ${
                   selectedType === type.id
-                    ? "border-white bg-white text-black font-bold"
+                    ? "border-white bg-white text-black font-bold shadow-sm"
                     : "border-border bg-surface text-zinc-400 hover:text-white"
                 }`}
               >
@@ -100,7 +105,7 @@ function ExploreContent() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="h-10 rounded-lg border border-border bg-surface px-3 py-2 text-xs font-mono text-white focus:border-white focus:outline-none"
+              className="h-10 rounded-xl border border-border bg-surface px-3 py-2 text-xs font-mono text-white focus:border-white focus:outline-none"
             >
               <option value="newest">NEWEST DROPS</option>
               <option value="price_asc">PRICE: LOW TO HIGH</option>

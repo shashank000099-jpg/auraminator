@@ -151,9 +151,10 @@ It combines **7 distinct commercial engines** with a zero-leakage **Anti-Circumv
 | `/seller/services` | **Developer Service Queue** | Manage incoming client debug and development orders, update milestones, and submit GitHub PR deliverable links. |
 | `/seller/payouts` | **Double-Entry Escrow Ledger** | Audit trail of all escrow credits, platform commission debits, and automated bank settlements. |
 | `/seller/onboarding` | **3-Minute Creator KYC** | Submit PAN/GSTIN entity details and bank account numbers for Razorpay Route linked account verification. |
-| `/admin/dashboard` | **Admin Mission Control** | Platform GMV monitoring, seller KYC approval queue, and Escrow Dispute Tribunal arbitration. |
+| `/admin/login` | **Root Admin Access Shield** | Secure dedicated Master Admin login (`shashank000099@gmail.com`). |
+| `/admin/dashboard` | **Admin Mission Control** | Master Omni-Control: Seller KYC approvals, listing moderation, Google for Jobs verification, and Escrow Dispute Tribunal arbitration. |
 | `/brand` | **Interactive Brand Kit** | Download official Auraminator full vector SVGs, monochrome wordmarks, favicon assets, and hex color codes. |
-| `/auth/login` | **Sign In Terminal** | Google One-Click OAuth, Email/Password authentication, and fast 1-click demo persona toggle. |
+| `/auth/login` | **Sign In Terminal** | Google One-Click OAuth, Email/Password authentication, Master Admin auto-routing, and demo persona toggle. |
 | `/auth/signup` | **Create Sovereign Account** | Google OAuth, Email registration, and Buyer vs Creator/Seller role switcher. |
 | `/auth/callback` | **OAuth Callback Handler** | Server-side Google OAuth session code exchange and redirect handler. |
 

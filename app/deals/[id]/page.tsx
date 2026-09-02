@@ -907,6 +907,30 @@ export default function ProtectedDealRoomPage() {
                 </div>
               )}
 
+              {/* Quick Mobile Negotiation Chips */}
+              <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1 text-[10px] font-mono">
+                {[
+                  "Can you do a 10% discount?",
+                  "Ready to lock in escrow 👍",
+                  "What's your best price?",
+                  "All deliverables clear!",
+                ].map((chip, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      try {
+                        if ("vibrate" in navigator) navigator.vibrate(10);
+                      } catch {}
+                      setChatInput(chip);
+                    }}
+                    className="whitespace-nowrap rounded-full border border-white/10 bg-surface-elevated px-2.5 py-1 text-zinc-400 hover:text-white hover:border-white/30 active:scale-95 transition"
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+
               {/* In-Deal Chat Input */}
               <form onSubmit={handleSendChat} className="flex gap-2 pt-2 border-t border-border">
                 <input
@@ -914,14 +938,14 @@ export default function ProtectedDealRoomPage() {
                   placeholder={`Message ${activeRole === "buyer" ? "Seller" : "Buyer"}...`}
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
-                  className="flex-1 h-9 rounded-lg border border-border bg-surface-elevated px-3 text-xs font-mono text-white placeholder:text-zinc-600 focus:border-white focus:outline-none"
+                  className="flex-1 h-10 rounded-xl border border-border bg-surface-elevated px-3 text-xs font-mono text-white placeholder:text-zinc-600 focus:border-white focus:outline-none"
                 />
                 <Button
                   type="submit"
                   variant="outline"
                   size="sm"
                   isLoading={isSendingChat}
-                  className="h-9 px-3"
+                  className="h-10 px-3.5 rounded-xl bg-white text-black hover:bg-zinc-200 font-bold"
                 >
                   <Send className="h-3.5 w-3.5" />
                 </Button>

@@ -202,19 +202,26 @@ export default function HomePage() {
           </div>
 
           {/* Category Filter Tabs */}
-          <div className="inline-flex flex-wrap gap-1.5 rounded-lg border border-border bg-surface p-1 font-mono text-xs">
+          <div className="flex overflow-x-auto scrollbar-none gap-1.5 rounded-xl border border-border bg-surface p-1 font-mono text-xs max-w-full">
             {[
               { id: "all", label: "ALL RELEASES" },
-              { id: "physical", label: "STREETWEAR (Apparel)" },
-              { id: "digital_file", label: "DIGITAL VAULT (3D & UI)" },
-              { id: "digital_link", label: "WORKSPACES (Notion)" },
+              { id: "saas", label: "⚡ SAAS & APPS" },
+              { id: "physical", label: "👕 STREETWEAR" },
+              { id: "source_code", label: "💻 CODE IP" },
+              { id: "digital_file", label: "💎 3D VAULT" },
+              { id: "service", label: "🛠️ SERVICES" },
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveFilter(tab.id)}
-                className={`px-3 py-1.5 rounded-md transition-all duration-150 ${
+                onClick={() => {
+                  try {
+                    if ("vibrate" in navigator) navigator.vibrate(10);
+                  } catch {}
+                  setActiveFilter(tab.id);
+                }}
+                className={`whitespace-nowrap px-3.5 py-1.5 rounded-lg transition-all duration-150 active:scale-95 ${
                   activeFilter === tab.id
-                    ? "bg-white text-black font-bold"
+                    ? "bg-white text-black font-bold shadow-sm"
                     : "text-zinc-400 hover:text-white hover:bg-white/5"
                 }`}
               >
@@ -224,8 +231,8 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Product Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Product Grid - Mobile Optimized */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {filteredProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
