@@ -20,6 +20,13 @@ export default function SellerOnboardingPage() {
   const [ifscCode, setIfscCode] = useState("HDFC0001234");
   const [beneficiaryName, setBeneficiaryName] = useState("Kaizen Global Design Labs Private Limited");
 
+  // Warehouse Pickup Address State
+  const [warehouseAddress, setWarehouseAddress] = useState("Plot 42, Okhla Industrial Area Phase 3");
+  const [warehouseCity, setWarehouseCity] = useState("New Delhi");
+  const [warehouseState, setWarehouseState] = useState("Delhi");
+  const [warehousePin, setWarehousePin] = useState("110020");
+  const [warehousePhone, setWarehousePhone] = useState("+91 9811002233");
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -42,6 +49,23 @@ export default function SellerOnboardingPage() {
           },
         }),
       });
+
+      // Also register warehouse pickup address for automated courier routes
+      await fetch("/api/seller/pickup-addresses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pickupLocationNickname: `${businessName.split(" ")[0]}-Central-Hub`,
+          contactName: beneficiaryName,
+          contactPhone: warehousePhone,
+          addressLine1: warehouseAddress,
+          city: warehouseCity,
+          state: warehouseState,
+          pincode: warehousePin,
+          isPrimary: true,
+        }),
+      });
+
       setIsSubmitted(true);
     } catch {
       setIsSubmitted(true);
@@ -60,10 +84,10 @@ export default function SellerOnboardingPage() {
 
           <div className="space-y-2">
             <h2 className="text-2xl font-bold uppercase tracking-tight text-white">
-              KYC DOSSIER TRANSMITTED
+              KYC &amp; WAREHOUSE PICKUP DOSSIER TRANSMITTED
             </h2>
             <p className="text-xs text-zinc-400 font-sans leading-relaxed">
-              Your business verification profile has entered the automated compliance tribunal. Instant sandbox access to Seller Studio is now unlocked.
+              Your business verification and automated Shiprocket courier pickup hub have been registered. Seller Studio access is now unlocked.
             </p>
           </div>
 
@@ -73,12 +97,12 @@ export default function SellerOnboardingPage() {
               <span className="font-bold text-white">{businessName}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-zinc-500">Tax Identifier (GSTIN):</span>
-              <span className="text-white">{taxIdentifier}</span>
+              <span className="text-zinc-500">Registered Pickup Hub:</span>
+              <span className="text-white">{warehouseCity} ({warehousePin})</span>
             </div>
             <div className="flex justify-between">
               <span className="text-zinc-500">Verification Status:</span>
-              <span className="text-amber-400 font-bold">Under Compliance Review</span>
+              <span className="text-emerald-400 font-bold">Verified &amp; Ready for Automated Dispatch</span>
             </div>
           </div>
 
@@ -106,10 +130,10 @@ export default function SellerOnboardingPage() {
               <span>VERIFIED CREATOR PROTOCOL</span>
             </div>
             <h1 className="text-3xl font-extrabold uppercase tracking-tight text-white">
-              Seller KYC &amp; Creator Onboarding
+              Seller KYC &amp; Logistics Onboarding
             </h1>
             <p className="text-xs text-zinc-400 font-sans leading-relaxed">
-              Join the sovereign creator network in 3 minutes. Unlock instant payouts to your bank account, automated Shiprocket courier labels, and protected escrow sales.
+              Join the sovereign creator network in 3 minutes. Unlock instant payouts to your bank account, automated Shiprocket courier routes, and protected escrow sales.
             </p>
           </div>
           <div>
@@ -125,7 +149,7 @@ export default function SellerOnboardingPage() {
             }`}
           >
             <Building className="h-4 w-4" />
-            <span className="font-bold">1. Legal Entity</span>
+            <span className="font-bold">1. Entity</span>
           </div>
           <div
             className={`rounded-lg border p-3 flex items-center gap-2.5 ${
@@ -133,7 +157,7 @@ export default function SellerOnboardingPage() {
             }`}
           >
             <Upload className="h-4 w-4" />
-            <span className="font-bold">2. Compliance Docs</span>
+            <span className="font-bold">2. Docs</span>
           </div>
           <div
             className={`rounded-lg border p-3 flex items-center gap-2.5 ${
@@ -141,7 +165,7 @@ export default function SellerOnboardingPage() {
             }`}
           >
             <CreditCard className="h-4 w-4" />
-            <span className="font-bold">3. Settlement Bank</span>
+            <span className="font-bold">3. Bank &amp; Pickup Hub</span>
           </div>
         </div>
 
@@ -190,35 +214,83 @@ export default function SellerOnboardingPage() {
                   ← Back
                 </Button>
                 <Button type="button" variant="primary" size="md" onClick={() => setStep(3)}>
-                  Next: Settlement Bank →
+                  Next: Bank &amp; Pickup Hub →
                 </Button>
               </div>
             </div>
           )}
 
           {step === 3 && (
-            <div className="space-y-4">
-              <h3 className="font-bold text-white text-sm uppercase border-b border-border pb-3">
-                Razorpay Route Settlement Bank Details
-              </h3>
-              <Input
-                label="Beneficiary Legal Account Name"
-                required
-                value={beneficiaryName}
-                onChange={(e) => setBeneficiaryName(e.target.value)}
-              />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <h3 className="font-bold text-white text-sm uppercase border-b border-border pb-3">
+                  1. Settlement Bank Account Details
+                </h3>
                 <Input
-                  label="Bank Account Number"
+                  label="Beneficiary Legal Account Name"
                   required
-                  value={bankAccount}
-                  onChange={(e) => setBankAccount(e.target.value)}
+                  value={beneficiaryName}
+                  onChange={(e) => setBeneficiaryName(e.target.value)}
                 />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Input
+                    label="Bank Account Number"
+                    required
+                    value={bankAccount}
+                    onChange={(e) => setBankAccount(e.target.value)}
+                  />
+                  <Input
+                    label="Bank IFSC Code"
+                    required
+                    value={ifscCode}
+                    onChange={(e) => setIfscCode(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Warehouse Pickup Address */}
+              <div className="space-y-4 pt-2 border-t border-border">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-emerald-400 text-sm uppercase">
+                    2. Automated Courier Pickup Warehouse Hub
+                  </h3>
+                  <span className="text-[10px] text-zinc-500">SHIPROCKET SYNC</span>
+                </div>
+                <p className="text-xs text-zinc-400 font-sans">
+                  Courier will automatically arrive at this address to pick up physical garments and drops when orders are received.
+                </p>
+
                 <Input
-                  label="Bank IFSC Code"
+                  label="Warehouse / Studio Address (Line 1)"
                   required
-                  value={ifscCode}
-                  onChange={(e) => setIfscCode(e.target.value)}
+                  value={warehouseAddress}
+                  onChange={(e) => setWarehouseAddress(e.target.value)}
+                />
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <Input
+                    label="City"
+                    required
+                    value={warehouseCity}
+                    onChange={(e) => setWarehouseCity(e.target.value)}
+                  />
+                  <Input
+                    label="State"
+                    required
+                    value={warehouseState}
+                    onChange={(e) => setWarehouseState(e.target.value)}
+                  />
+                  <Input
+                    label="Postal PIN Code"
+                    required
+                    value={warehousePin}
+                    onChange={(e) => setWarehousePin(e.target.value)}
+                  />
+                </div>
+                <Input
+                  label="Warehouse Dispatch Contact Phone"
+                  required
+                  value={warehousePhone}
+                  onChange={(e) => setWarehousePhone(e.target.value)}
                 />
               </div>
 
@@ -227,7 +299,7 @@ export default function SellerOnboardingPage() {
                   ← Back
                 </Button>
                 <Button type="submit" variant="primary" size="md" isLoading={isSubmitting}>
-                  SUBMIT COMPLETE KYC DOSSIER
+                  SUBMIT COMPLETE ONBOARDING DOSSIER
                 </Button>
               </div>
             </div>

@@ -227,10 +227,32 @@ create table if not exists public.order_items (
 -- ==========================================
 -- 6. SHIPPING, LOGISTICS & REVERSE PIPELINE
 -- ==========================================
+create table if not exists public.seller_pickup_addresses (
+  id uuid primary key default gen_random_uuid(),
+  seller_id uuid not null references public.profiles(id) on delete cascade,
+  pickup_location_nickname text not null default 'Primary Warehouse',
+  contact_name text not null,
+  contact_phone text not null,
+  contact_email text,
+  address_line1 text not null,
+  address_line2 text default '',
+  city text not null,
+  state text not null,
+  pincode text not null,
+  country text not null default 'IN',
+  is_primary boolean not null default true,
+  is_verified boolean not null default true,
+  shiprocket_pickup_id text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.shipments (
   id uuid primary key default gen_random_uuid(),
   order_id uuid not null references public.orders(id) on delete cascade,
   seller_id uuid not null references public.profiles(id),
+  pickup_address_id uuid references public.seller_pickup_addresses(id),
+  pickup_location_nickname text default 'Primary Warehouse',
   shiprocket_shipment_id text,
   shiprocket_order_id text,
   awb_code text unique,
@@ -315,12 +337,32 @@ create table if not exists public.ledger_entries (
 
 create table if not exists public.payouts (
   id uuid primary key default gen_random_uuid(),
+  order_id uuid references public.orders(id),
   seller_id uuid not null references public.profiles(id),
   amount numeric(10,2) not null check (amount > 0),
-  gateway_payout_id text,
-  status text not null default 'processing' check (status in ('processing', 'completed', 'failed', 'reversed')),
+  gateway_account_id text,
+  gateway_transfer_id text,
+  idempotency_key text unique not null,
+  escrow_state text not null default 'ESCROW_PENDING' check (escrow_state in (
+    'ESCROW_PENDING',
+    'DELIVERY_VERIFIED',
+    'AVAILABLE_FOR_PAYOUT',
+    'PAYOUT_INITIATED',
+    'PAYOUT_COMPLETED',
+    'PAYOUT_FAILED',
+    'MANUAL_REVIEW_REQUIRED',
+    'ESCROW_FROZEN_RTO',
+    'ESCROW_DISPUTED_HOLD',
+    'REFUNDED_TO_BUYER'
+  )),
+  status text not null default 'processing' check (status in ('processing', 'completed', 'failed', 'reversed', 'on_hold')),
+  failure_code text,
   failure_reason text,
-  created_at timestamptz not null default now()
+  retry_count int not null default 0,
+  authorized_at timestamptz,
+  settled_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
 -- ==========================================

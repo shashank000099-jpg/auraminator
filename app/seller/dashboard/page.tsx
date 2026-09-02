@@ -237,6 +237,42 @@ export default function SellerDashboardPage() {
           </div>
         </div>
 
+        {/* REGISTERED WAREHOUSE PICKUP HUB (AUTOMATED SHIPROCKET DISPATCH) */}
+        <div className="rounded-2xl border border-white/10 bg-surface p-6 space-y-4 brutalist-card">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
+            <div className="flex items-center gap-2 text-white font-bold text-sm uppercase">
+              <Truck className="h-4 w-4 text-emerald-400" />
+              <span>Registered Warehouse Pickup Location (Automated Logistics)</span>
+            </div>
+            <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded">
+              ✓ SHIPROCKET COURIER SYNC ACTIVE
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono">
+            <div className="p-3.5 rounded-xl border border-white/5 bg-surface-elevated space-y-1">
+              <span className="text-[10px] text-zinc-500 uppercase block">Primary Pickup Hub</span>
+              <p className="text-white font-bold">Kaizen Central Logistics Hub</p>
+              <p className="text-[11px] text-zinc-400 font-sans">Plot 42, Okhla Industrial Area Phase 3</p>
+              <p className="text-[11px] text-zinc-400">New Delhi, Delhi - 110020</p>
+            </div>
+
+            <div className="p-3.5 rounded-xl border border-white/5 bg-surface-elevated space-y-1">
+              <span className="text-[10px] text-zinc-500 uppercase block">Dispatch Contact</span>
+              <p className="text-white font-bold">Kaizen Logistics Lead</p>
+              <p className="text-[11px] text-zinc-400">+91 9811002233</p>
+              <p className="text-[11px] text-zinc-400">dispatch@kaizenstudios.in</p>
+            </div>
+
+            <div className="p-3.5 rounded-xl border border-white/5 bg-surface-elevated space-y-1">
+              <span className="text-[10px] text-zinc-500 uppercase block">Automated Dispatch Route</span>
+              <p className="text-emerald-400 font-bold">Seller Warehouse → Buyer Doorstep</p>
+              <p className="text-[11px] text-zinc-400 font-sans">Delhivery Surface Express (2-4 Days)</p>
+              <p className="text-[10px] text-zinc-500">Escrow released upon verified delivery scan</p>
+            </div>
+          </div>
+        </div>
+
         {/* Quick Links Footer */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Link

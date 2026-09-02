@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { createServerSupabase } from "@/lib/supabase/server";
+import { EscrowStateMachine } from "@/lib/escrow-engine";
 
 export async function POST(req: NextRequest) {
   try {
@@ -42,10 +43,11 @@ export async function POST(req: NextRequest) {
       });
 
     if (idempotencyErr && idempotencyErr.code === "23505") {
-      // 23505 is unique_violation
+      // Duplicate webhook delivery acknowledged safely without re-execution
       return NextResponse.json({ message: "Duplicate event acknowledged" }, { status: 200 });
     }
 
+    // 3. CASE A: payment.captured (Initial Escrow Deposit Hold)
     if (eventType === "payment.captured") {
       const gatewayOrderId = event.payload?.payment?.entity?.order_id;
       const paymentId = event.payload?.payment?.entity?.id;
@@ -63,7 +65,7 @@ export async function POST(req: NextRequest) {
 
         if (order && order.order_items) {
           for (const item of order.order_items) {
-            // A. Credit Double-Entry Seller Escrow
+            // A. Credit Double-Entry Seller Escrow (Balance Type: pending)
             await supabase.from("ledger_entries").insert({
               seller_id: item.seller_id,
               order_id: order.id,
@@ -71,8 +73,21 @@ export async function POST(req: NextRequest) {
               entry_type: "credit_escrow",
               amount: item.seller_share,
               balance_type: "pending",
-              description: `Escrow hold for Order #${order.id.slice(0, 8)}`,
+              description: `Escrow hold for Order #${order.id.slice(0, 8)} [ESCROW_PENDING]`,
             });
+
+            // Initialize Payout Record in ESCROW_PENDING State
+            await supabase.from("payouts").upsert(
+              {
+                order_id: order.id,
+                seller_id: item.seller_id,
+                amount: item.seller_share,
+                idempotency_key: `payout_${order.id}_${item.seller_id}`,
+                escrow_state: "ESCROW_PENDING",
+                status: "processing",
+              },
+              { onConflict: "idempotency_key" }
+            );
 
             // B. Issue Entitlement for Digital Files/Vault Links
             if (["digital_file", "digital_link"].includes(item.product_type)) {
@@ -93,6 +108,38 @@ export async function POST(req: NextRequest) {
           }
         }
       }
+    }
+
+    // 4. CASE B: transfer.processed / payout.processed / transfer.failed (Source of Truth Settlement)
+    if (
+      [
+        "transfer.processed",
+        "payout.processed",
+        "settlement.processed",
+        "transfer.failed",
+        "payout.failed",
+        "transfer.reversed",
+      ].includes(eventType)
+    ) {
+      const transferEntity = event.payload?.transfer?.entity || event.payload?.payout?.entity;
+      const transferId = transferEntity?.id;
+      const failureReason = transferEntity?.error?.description || transferEntity?.failure_reason;
+      const failureCode = transferEntity?.error?.code || transferEntity?.status;
+
+      const fsmResult = await EscrowStateMachine.handleRazorpayWebhookEvent({
+        eventType,
+        transferId,
+        failureReason,
+        failureCode,
+        rawPayload: event,
+      });
+
+      return NextResponse.json({
+        success: true,
+        eventId,
+        eventType,
+        fsmResult,
+      });
     }
 
     return NextResponse.json({ success: true, eventId, eventType });

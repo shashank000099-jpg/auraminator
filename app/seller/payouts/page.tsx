@@ -133,6 +133,41 @@ export default function SellerPayoutsPage() {
           </div>
         </div>
 
+        {/* Escrow Finite State Machine Pipeline */}
+        <div className="rounded-xl border border-border bg-surface p-6 space-y-4 brutalist-card">
+          <div className="flex items-center justify-between border-b border-border pb-3">
+            <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+              Bank-Grade Escrow Finite State Machine (FSM)
+            </h3>
+            <span className="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded">
+              IDEMPOTENCY &amp; DOUBLE-SPEND PROTECTED
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-[10px] font-mono">
+            <div className="p-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-400 space-y-1">
+              <span className="font-bold block">1. ESCROW_PENDING</span>
+              <p className="text-[9px] text-zinc-400">Payment captured, held in platform escrow</p>
+            </div>
+            <div className="p-2.5 rounded-lg border border-white/20 bg-surface-elevated text-zinc-300 space-y-1">
+              <span className="font-bold block">2. DELIVERY_VERIFIED</span>
+              <p className="text-[9px] text-zinc-400">PoD scan or buyer handover confirmation</p>
+            </div>
+            <div className="p-2.5 rounded-lg border border-white/20 bg-surface-elevated text-zinc-300 space-y-1">
+              <span className="font-bold block">3. AVAILABLE_FOR_PAYOUT</span>
+              <p className="text-[9px] text-zinc-400">No active RTO / dispute, 85% net authorized</p>
+            </div>
+            <div className="p-2.5 rounded-lg border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 space-y-1">
+              <span className="font-bold block">4. PAYOUT_INITIATED</span>
+              <p className="text-[9px] text-zinc-400">Route transfer dispatched to linked account</p>
+            </div>
+            <div className="p-2.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 space-y-1 col-span-2 sm:col-span-1">
+              <span className="font-bold block">5. PAYOUT_COMPLETED</span>
+              <p className="text-[9px] text-zinc-400">Webhook verified (or FAIL ➔ MANUAL_REVIEW)</p>
+            </div>
+          </div>
+        </div>
+
         {/* Escrow Release Triggers Transparency */}
         <div className="rounded-xl border border-border bg-surface p-6 space-y-4">
           <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-border pb-3">
@@ -163,7 +198,7 @@ export default function SellerPayoutsPage() {
             <div className="rounded-lg border border-border bg-surface-elevated p-4 space-y-2">
               <div className="flex items-center gap-2 text-white font-bold">
                 <Download className="h-4 w-4 text-emerald-400" />
-                <span>3. Digital R2 Vaults</span>
+                <span>3. Digital Supabase Vaults</span>
               </div>
               <p className="text-zinc-400 font-sans text-xs leading-relaxed">
                 Escrow unlocks instantly upon verified cryptographic presigned download token issuance.

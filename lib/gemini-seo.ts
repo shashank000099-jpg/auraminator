@@ -31,7 +31,7 @@ export async function generateAutomatedSeo(input: {
   techStackOrLocation?: string;
   brandOrCompany?: string;
 }): Promise<GeneratedSeoMetadata> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY || process.env.AI_API_KEY;
   const cleanTitle = input.title.trim();
   const cleanDesc = input.description.trim();
   const type = input.type || "saas";
@@ -63,7 +63,7 @@ Generate optimal SEO & GEO metadata in valid JSON format with these exact keys:
 Output ONLY the raw JSON object, without markdown backticks or commentary.`;
 
       const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

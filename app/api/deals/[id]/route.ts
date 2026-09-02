@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { MOCK_DEAL_ROOMS, MOCK_PRODUCTS } from "@/lib/mock-data";
 import { detectContactInformation } from "@/lib/anti-circumvention";
+import { EscrowStateMachine } from "@/lib/escrow-engine";
 
 export async function GET(
   request: Request,
@@ -179,10 +180,22 @@ export async function PATCH(
           deal_id: dealId,
           sender_id: payload.senderId || "buyer-001",
           sender_role: "buyer" as const,
-          message: `Buyer verified all assets and confirmed handover. Auraminator Escrow released ₹${deal.seller_payout.toLocaleString("en-IN")} (85% net payout) to seller's bank account. Platform fee of ₹${deal.platform_fee.toLocaleString("en-IN")} (15%) captured. Deal completed successfully.`,
+          message: `Buyer verified all assets and confirmed handover. Auraminator Escrow authorized ₹${deal.seller_payout.toLocaleString("en-IN")} (85% net payable) to seller's linked account. Platform fee of ₹${deal.platform_fee.toLocaleString("en-IN")} (15%) captured. State: [AVAILABLE_FOR_PAYOUT ➔ PAYOUT_INITIATED].`,
           message_type: "escrow_released" as const,
           created_at: new Date().toISOString(),
         };
+
+        // Trigger Finite State Machine Authorization
+        try {
+          await EscrowStateMachine.verifyDeliveryAndAuthorize({
+            orderId: dealId,
+            sellerId: deal.seller_id,
+            triggerSource: "buyer_deal_handover",
+            referenceId: dealId,
+          });
+        } catch (fsmErr: any) {
+          console.error("[-] Digital deal FSM authorization notice:", fsmErr.message);
+        }
 
         deal = {
           ...deal,
@@ -199,10 +212,20 @@ export async function PATCH(
           deal_id: dealId,
           sender_id: payload.senderId || "buyer-001",
           sender_role: (payload.senderRole || "buyer") as "buyer" | "seller" | "platform_arbitrator",
-          message: `DISPUTE TRIBUNAL OPENED. Escrow funds frozen. Auraminator Compliance Lead will review credential audit logs and arbitrate within 24 hours. Reason: ${payload.reason}`,
+          message: `DISPUTE TRIBUNAL OPENED. Escrow state frozen in [ESCROW_DISPUTED_HOLD]. Auraminator Compliance Lead will review audit logs and arbitrate within 24 hours. Reason: ${payload.reason}`,
           message_type: "dispute_opened" as const,
           created_at: new Date().toISOString(),
         };
+
+        // Freeze Escrow in FSM
+        try {
+          await EscrowStateMachine.freezeEscrow({
+            orderId: dealId,
+            sellerId: deal.seller_id,
+            reason: `Buyer Dispute Opened: ${payload.reason}`,
+            targetState: "ESCROW_DISPUTED_HOLD",
+          });
+        } catch {}
 
         deal = {
           ...deal,

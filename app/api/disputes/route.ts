@@ -28,6 +28,17 @@ export async function POST(req: NextRequest) {
       .select()
       .single();
 
+    // Freeze Escrow in FSM State Machine immediately
+    try {
+      const { EscrowStateMachine } = await import("@/lib/escrow-engine");
+      await EscrowStateMachine.freezeEscrow({
+        orderId: order_id,
+        sellerId: seller_id || "seller-001",
+        reason: `Buyer Dispute Opened: ${reason}`,
+        targetState: "ESCROW_DISPUTED_HOLD",
+      });
+    } catch {}
+
     return NextResponse.json({
       success: true,
       dispute: dispute || {
